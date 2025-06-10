@@ -458,6 +458,44 @@ function type2(e) {
     updateStartPromptForMobile();
     // Also call on resize in case device orientation changes
     window.addEventListener('resize', updateStartPromptForMobile);
+
+    // Update end prompt and allow tap to restart on mobile
+    function updateEndPromptForMobile() {
+      const endPrompt = document.getElementById('endPrompt');
+      if (isMobile()) {
+        endPrompt.textContent = 'Tap screen';
+        // Add tap-to-restart event
+        const tapEndHandler = function(e) {
+          if (document.body.classList.contains('game-end')) {
+            e.preventDefault();
+            overlay.style.opacity = 1;
+            setTimeout(() => {
+              endEl.classList.remove('fade-in');
+              titleEl.classList.remove('fade-out');
+              titleEl.classList.add('fade-in');
+              document.body.classList.remove('game-end');
+              overlay.style.opacity = 0;
+            }, 500);
+          }
+        };
+        // Remove previous to avoid duplicates
+        document.body.removeEventListener('touchstart', tapEndHandler);
+        document.body.addEventListener('touchstart', tapEndHandler, { passive: false });
+      } else {
+        endPrompt.textContent = 'Press Enter';
+        document.body.removeEventListener('touchstart', ()=>{});
+      }
+    }
+    // Call on load
+    updateEndPromptForMobile();
+    // Also call on resize in case device orientation changes
+    window.addEventListener('resize', updateEndPromptForMobile);
+    // Also call when game ends
+    const origEndTest2Mobile = endTest2;
+    endTest2 = function() {
+      origEndTest2Mobile();
+      updateEndPromptForMobile();
+    };
   </script>
 </body>
 </html>
