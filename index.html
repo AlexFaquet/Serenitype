@@ -431,16 +431,19 @@
   const endEl = document.getElementById('endScreen');
 
   // Start game: fade out title, then add .game-start
-  function startGame2() {
-    // Title screen is already faded out by caller
-    setTimeout(() => {
-      bodyEl.classList.add('game-start');
-      // Play music on user gesture
-      bgMusic.volume = 0.3;
-      bgMusic.play().catch(() => {});
-      initTest2();
-    }, 1000);
-  }
+function startGame2() {
+  setTimeout(() => {
+    bodyEl.classList.add('game-start');
+    // Focus mobile input immediately so keyboard shows when game starts
+    if (isMobile()) {
+      const mobileInput = document.getElementById('mobileInput') 
+                        || document.getElementById('hiddenMobileInput');
+      if (mobileInput) mobileInput.focus();
+    }
+    initTest2();
+  }, 1000);
+}
+
 
   // Initialize a new typing test
   function initTest2() {
@@ -544,18 +547,26 @@ function onTextTouch(e) {
   // Only act during gameplay
   if (!bodyEl.classList.contains('game-start')) return;
   e.preventDefault();
-  // On mobile, always lock caret to the front (index 0)
+
   if (isMobile()) {
+    // Focus the mobile input so keyboard pops up
+    const mobileInput = document.getElementById('mobileInput') 
+                      || document.getElementById('hiddenMobileInput');
+    if (mobileInput) {
+      mobileInput.focus();
+    }
+
+    // Lock caret to front
     const spans = document.querySelectorAll('#dynamicWrap span');
     if (!spans.length) return;
-    // Remove existing caret and set at front
     spans.forEach(s => s.classList.remove('caret'));
     spans[0].classList.add('caret');
     idx = 0;
     chase2();
   }
-  // On desktop touch (if any), do nothing so caret remains controlled by keyboard only
+  // On desktop touch, do nothing (caret stays keyboard-controlled)
 }
+
 
   // Attach once
 const textEl = document.getElementById('text');
