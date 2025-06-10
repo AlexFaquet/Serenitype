@@ -21,13 +21,15 @@
       --correct-color: #fff;
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100dvh; }
     body {
       background: var(--bg-gradient);
       color: var(--ghost-color);
       font-family: 'Inter', sans-serif;
       overflow: hidden;
       position: relative;
-      height: 100vh;
+      height: 100dvh;
+      touch-action: manipulation;
       transition: background 1s ease, color 1s ease;
     }
     /* Parallax particle layers */
@@ -124,6 +126,43 @@
       color: var(--correct-color);
       opacity: 0; transition: opacity 1s ease; }
     body.game-end #resultWPM, body.game-end #resultAcc { opacity: 1; }
+
+    /* Mobile input styles */
+    #mobileInputWrap {
+      display: none;
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      width: 100vw;
+      background: rgba(30,30,47,0.95);
+      z-index: 20;
+      padding: 1rem 2vw;
+      box-shadow: 0 -2px 16px rgba(0,0,0,0.2);
+    }
+    #mobileInput {
+      width: 100%;
+      font-size: 1.5rem;
+      padding: 0.7rem 1rem;
+      border-radius: 1.5rem;
+      border: none;
+      outline: none;
+      background: #22243a;
+      color: var(--correct-color);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    @media (max-width: 700px) {
+      html, body { height: 100dvh; }
+      body {
+        font-size: 3vw;
+        overflow: auto;
+      }
+      #titleScreen h1 { font-size: 12vw; }
+      #themeName { font-size: 5vw; }
+      #pressEnter, #endPrompt { font-size: 4vw; }
+      #dynamicWrap { font-size: 8vw; }
+      #resultWPM, #resultAcc { font-size: 7vw; }
+      #muteBtn { font-size: 2.5rem; top: 0.5rem; right: 0.5rem; }
+      #mobileInputWrap { display: block; }
+    }
   </style>
 </head>
 <body tabindex="0">
@@ -145,6 +184,11 @@
 
   <!-- Typing area -->
   <div id="text"><div id="enterWrap"><div id="dynamicWrap"></div></div></div>
+
+  <!-- Mobile input (hidden on desktop) -->
+  <div id="mobileInputWrap">
+    <input id="mobileInput" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Type here..." />
+  </div>
 
   <!-- End stats -->
   <div id="endScreen">
@@ -332,6 +376,63 @@ function type2(e) {
 }
     function updateStats2(){ const m=(Date.now()-startTime)/60000||1/60; wpmEl2.textContent=Math.round((correct/5)/m); accEl2.textContent=Math.round((correct/tot)*100)||0; }
     function endTest2(){ document.removeEventListener('keydown',type2); bodyEl.classList.remove('game-start'); bodyEl.classList.add('game-end'); endEl.classList.add('fade-in'); }
+
+    // Mobile detection
+    function isMobile() {
+      return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|Mobile/i.test(navigator.userAgent);
+    }
+    const mobileInputWrap = document.getElementById('mobileInputWrap');
+    const mobileInput = document.getElementById('mobileInput');
+    let lastMobileValue = '';
+
+    // Show/hide mobile input based on device and game state
+    function updateMobileInputVisibility() {
+      if (isMobile() && document.body.classList.contains('game-start')) {
+        mobileInputWrap.style.display = 'block';
+        setTimeout(() => mobileInput.focus(), 100);
+      } else {
+        mobileInputWrap.style.display = 'none';
+        mobileInput.blur();
+      }
+    }
+
+    // Listen for input on mobile and simulate keydown events
+    if (isMobile()) {
+      mobileInput.addEventListener('input', function(e) {
+        let val = mobileInput.value;
+        // Only process new character or backspace
+        if (val.length < lastMobileValue.length) {
+          // Backspace
+          type2({ key: 'Backspace', preventDefault: ()=>{}, keyCode:8 });
+        } else if (val.length > lastMobileValue.length) {
+          // New character
+          let newChar = val.slice(-1);
+          type2({ key: newChar, preventDefault: ()=>{}, keyCode: newChar.charCodeAt(0) });
+        }
+        lastMobileValue = val;
+      });
+    }
+
+    // Patch startGame2 and endTest2 to show/hide mobile input
+    const origStartGame2 = startGame2;
+    startGame2 = function() {
+      origStartGame2();
+      if (isMobile()) {
+        mobileInput.value = '';
+        lastMobileValue = '';
+        updateMobileInputVisibility();
+      }
+    };
+    const origEndTest2 = endTest2;
+    endTest2 = function() {
+      origEndTest2();
+      if (isMobile()) {
+        updateMobileInputVisibility();
+      }
+    };
+
+    // Also update on state changes
+    document.body.addEventListener('transitionend', updateMobileInputVisibility);
   </script>
 </body>
 </html>
