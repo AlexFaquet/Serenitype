@@ -175,12 +175,18 @@
     }
     @keyframes blink {50%{border-color:transparent;}}
 
-    #mobileInputWrap {
+/* Hide always by default */
+#mobileInputWrap {
   display: none;
 }
-body.game-start #mobileInputWrap {
-  display: block;
+
+/* Show on mobile when game is running */
+@media (max-width: 700px) {
+  body.game-start #mobileInputWrap {
+    display: block;
+  }
 }
+
 
 
     /* End stats */
@@ -266,17 +272,8 @@ body.game-start #mobileInputWrap {
     </div>
   </div>
 
-  <!-- inside body, e.g. just after titleScreen/endScreen -->
-<div id="mobileInputWrap">
-  <input id="mobileInput" type="text" autocomplete="off" autocorrect="off"
-         autocapitalize="off" spellcheck="false"
-         placeholder="Type here..."
-         style="position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%); 
-                width: 90%; max-width: 400px; padding: 0.8rem; font-size: 1.2rem;
-                border-radius: 1.5rem; border: none; outline: none;
-                background: rgba(255,255,255,0.1); color: var(--correct-color);
-                z-index: 20;"/>
-</div>
+
+
 
 
   <!-- End stats -->
@@ -455,14 +452,11 @@ body.game-start #mobileInputWrap {
 
   // Start game: fade out title, then add .game-start
 function startGame2() {
-  // fade-out already done
   setTimeout(() => {
     bodyEl.classList.add('game-start');
     if (isMobile()) {
       const mobileInput = document.getElementById('mobileInput');
-      if (mobileInput) {
-        mobileInput.focus();
-      }
+      if (mobileInput) mobileInput.focus();
     }
     initTest2();
   }, 1000);
@@ -551,20 +545,76 @@ function startGame2() {
     }
     updateStats2();
   }
-
+if (isMobile()) {
   const mobileInput = document.getElementById('mobileInput');
-mobileInput.addEventListener('input', function(e) {
-  const val = mobileInput.value;
-  if (val.length > 0) {
-    const char = val.slice(-1);
-    type2({ key: char, preventDefault: ()=>{} });
-    mobileInput.value = '';
+  if (mobileInput) {
+    mobileInput.addEventListener('input', function(e) {
+      const val = mobileInput.value;
+      if (val.length > 0) {
+        const char = val.slice(-1);
+        type2({ key: char, preventDefault: ()=>{} });
+        mobileInput.value = '';
+      }
+    });
+    mobileInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Backspace') {
+        type2({ key: 'Backspace', preventDefault: ()=>{} });
+        e.preventDefault();
+      }
+    });
   }
-});
-mobileInput.addEventListener('keydown', function(e) {
-  if (e.key === 'Backspace') {
-    type2({ key: 'Backspace', preventDefault: ()=>{} });
-    e.preventDefault();
+}
+
+// Call once on load:
+window.addEventListener('DOMContentLoaded', () => {
+  if (isMobile()) {
+    const wrap = document.createElement('div');
+    wrap.id = 'mobileInputWrap';
+    // style via CSS class or inline:
+    wrap.style.cssText = `
+      position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%);
+      width: 90%; max-width: 400px; z-index: 20;
+    `;
+    const inp = document.createElement('input');
+    inp.id = 'mobileInput';
+    inp.type = 'text';
+    inp.autocomplete = 'off';
+    inp.autocorrect = 'off';
+    inp.autocapitalize = 'off';
+    inp.spellcheck = false;
+    inp.placeholder = 'Type here...';
+    inp.style.cssText = `
+      width: 100%; padding: 0.8rem; font-size: 1.2rem;
+      border-radius: 1.5rem; border: none; outline: none;
+      background: rgba(255,255,255,0.1); color: var(--correct-color);
+    `;
+    wrap.appendChild(inp);
+    document.body.appendChild(wrap);
+
+    // Attach listeners for mobileInput:
+    inp.addEventListener('input', e => {
+      const val = inp.value;
+      if (val.length > 0) {
+        const char = val.slice(-1);
+        type2({ key: char, preventDefault: ()=>{} });
+        inp.value = '';
+      }
+    });
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Backspace') {
+        type2({ key: 'Backspace', preventDefault: ()=>{} });
+        e.preventDefault();
+      }
+    });
+
+    // Focus when starting game:
+    const originalStart = startGame2;
+    startGame2 = function() {
+      originalStart();
+      setTimeout(() => {
+        inp.focus();
+      }, 100);
+    };
   }
 });
 
@@ -590,10 +640,8 @@ function onTextTouch(e) {
   e.preventDefault();
   if (isMobile()) {
     const mobileInput = document.getElementById('mobileInput');
-    if (mobileInput) {
-      mobileInput.focus();
-    }
-    // lock caret to front
+    if (mobileInput) mobileInput.focus();
+    // lock caret to front...
     const spans = document.querySelectorAll('#dynamicWrap span');
     if (!spans.length) return;
     spans.forEach(s => s.classList.remove('caret'));
