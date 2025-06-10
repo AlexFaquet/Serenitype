@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Serenitype</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #1e1e2f 0%, #2d2d44 100%);
+      --ghost-color: #ccc;
+      --correct-color: #fff;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg-gradient);
+      color: var(--ghost-color);
+      font-family: 'Inter', sans-serif;
+      overflow: hidden;
+      position: relative;
+      height: 100vh;
+      transition: background 1s ease, color 1s ease;
+    }
+    /* Parallax particle layers */
+    canvas[layer] {
+      position: absolute; top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      pointer-events: none; z-index: 0;
+    }
+    /* Theme overlay for fades */
+    #themeOverlay {
+      position: absolute; inset: 0;
+      background: #000; pointer-events: none;
+      opacity: 0; transition: opacity 0.5s ease;
+      z-index: 9;
+    }
+    /* Mute button */
+    #muteBtn {
+      position: absolute; top: 1rem; right: 1rem;
+      background: rgba(255,255,255,0.2);
+      border: none; padding: 0.4rem; border-radius: 50%;
+      font-size: 1.5rem; color: var(--ghost-color);
+      cursor: pointer; transition: opacity 0.3s;
+      z-index: 11;
+    }
+    #muteBtn:hover { opacity: 0.7; }
+    /* Title & End screens */
+    #titleScreen, #endScreen {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      justify-content: center; align-items: center;
+      background: rgba(0,0,0,0.7);
+      z-index: 10; opacity: 1; transition: opacity 1s ease;
+    }
+    #titleScreen.fade-out, #endScreen.fade-out { opacity: 0; }
+    #titleScreen h1 {
+      font-size: 8vw; color: var(--correct-color);
+      opacity: 0; animation: fadeIn 2s ease-in-out 0.5s forwards;
+    }
+    #themeName {
+      margin-top: 1rem; font-size: 2.5vw;
+      color: var(--ghost-color);
+      opacity: 0; animation: fadeIn 1s ease-in-out 1s forwards;
+      text-transform: capitalize;
+    }
+    #pressEnter, #endPrompt {
+      margin-top: 2rem; font-size: 2vw;
+      color: var(--ghost-color);
+      animation: breathe 2s ease-in-out infinite;
+    }
+    @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+    @keyframes breathe {0%{opacity:0.4;}50%{opacity:0.8;}100%{opacity:0.4;} }
+    /* Game text */
+    #text {
+      position: absolute; inset: 0;
+      display: flex; align-items: center;
+      padding: 0 5vw; overflow: hidden;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.5s ease; z-index: 1;
+    }
+    body.game-start #text { opacity: 1; pointer-events: auto; }
+    #enterWrap {
+      display: inline-block; white-space: nowrap;
+      transform: translateX(100%); opacity: 0;
+      transition: transform 1s ease-in-out, opacity 1s ease-in-out;
+    }
+    body.game-start #enterWrap {
+      transform: translateX(0); opacity: 1;
+    }
+    #dynamicWrap {
+      display: inline-block; white-space: nowrap;
+      transition: transform 1s cubic-bezier(0.22,1,0.36,1), color 1s ease;
+      font-size: 6vw; line-height: 1.2;
+    }
+    #dynamicWrap span {
+      opacity: 0.4; color: var(--ghost-color);
+      transition: opacity 0.3s, color 1s ease;
+    }
+    #dynamicWrap span.correct { opacity: 1; color: var(--correct-color); }
+    #dynamicWrap span.incorrect {
+      color: #f66; opacity: 1;
+      animation: shake 0.2s;
+    }
+    @keyframes shake {0%{transform:translateX(0);}25%{transform:translateX(-2px);}50%{transform:translateX(2px);}75%{transform:translateX(-2px);}100%{transform:translateX(0);}}
+    #dynamicWrap span.caret {
+      border-left: 3px solid var(--correct-color);
+      animation: blink 1s step-start infinite;
+    }
+    @keyframes blink {50%{border-color:transparent;}}
+    /* End stats */
+    #endScreen { opacity: 0; pointer-events: none; }
+    body.game-end #endScreen { opacity: 1; pointer-events: auto; }
+    #resultWPM, #resultAcc {
+      font-size: 4vw; margin: 0.5rem 0;
+      color: var(--correct-color);
+      opacity: 0; transition: opacity 1s ease; }
+    body.game-end #resultWPM, body.game-end #resultAcc { opacity: 1; }
+  </style>
+</head>
+<body tabindex="0">
+  <!-- Parallax canvases -->
+  <canvas id="particles-bg" layer="bg"></canvas>
+  <canvas id="particles-md" layer="md"></canvas>
+  <canvas id="particles-fg" layer="fg"></canvas>
+
+  <div id="themeOverlay"></div>
+  <!-- Mute toggle -->
+  <button id="muteBtn">🔊</button>
+
+  <!-- Title screen -->
+  <div id="titleScreen">
+    <h1>Serenitype</h1>
+    <div id="themeName"></div>
+    <div id="pressEnter">Press Enter To Play</div>
+  </div>
+
+  <!-- Typing area -->
+  <div id="text"><div id="enterWrap"><div id="dynamicWrap"></div></div></div>
+
+  <!-- End stats -->
+  <div id="endScreen">
+    <div id="resultWPM">WPM: <span id="wpm">0</span></div>
+    <div id="resultAcc">Accuracy: <span id="acc">100</span>%</div>
+    <div id="endPrompt">Press Enter</div>
+  </div>
+
+  <!-- Background music -->
+  <audio id="bgMusic" src="ambient.mp3" loop preload="auto"></audio>
+
+  <script>
+
+const texts = [
+    "In the lavender fields at dawn, a solitary traveler walked along a mist-kissed path. Each breath hung like a soft whisper, and the dew-laden petals reflected the pastel sky, guiding footsteps toward an unseen horizon.",
+    "Beneath the ancient oak’s wide embrace, golden leaves drifted down like silent blessings. The forest floor, carpeted in moss and dappled sunlight, seemed to pulse with the gentle heartbeat of centuries past.",
+    "Along a tranquil mountain lake, the water mirrored snow-capped peaks and drifting clouds. A lone canoe glided in silence, its gentle ripple carrying the soft song of the wind.",
+    "On a quiet city street at twilight, lanterns flickered awake. The cobblestones glistened from an earlier rain, and the air held the promise of stories waiting beyond each narrow doorway.",
+    "In a seaside cove, waves whispered secrets to the shore. Foamy lace dissolved at the feet of weathered rocks, while gulls wheeled overhead in sunlit arcs.",
+    "High in a desert canyon, sandstone walls glowed a molten copper at sunset. The hush of the land invited the soul to slow, to listen to the earth’s ancient memory in every grain of sand.",
+    "Under a veil of northern lights, a frozen tundra shimmered in ethereal hues. Footprints left temporary marks, soon erased by swirling snow, as the sky danced in silent wonder.",
+    "Within the echoing halls of a centuries-old library, dust motes floated in shafts of golden light. The scent of aged parchment and leather-bound tomes invited a quiet reverence for every story held within.",
+    "Atop a rolling hill blanketed in wildflowers, bees hummed a gentle chorus. Each blossom swayed in time to an unseen breeze, as if the meadow itself breathed in harmony with the world.",
+    "Under a star-strewn sky, a small sailboat drifted on glassy water. The Milky Way arched overhead, and the hush of night wrapped the traveler in a cocoon of serene infinity.",
+    "In a hidden garden behind ivy-covered gates, fountains murmured in secret rhythms. Lanterns hung like suspended dreams, guiding the wanderer along winding stone paths.",
+    "At the edge of a misty moor, heather stretched to the horizon in delicate waves. The scent of damp earth and distant rain whispered of quiet, timeless summers.",
+    "Inside a mountain monastery, bells tolled at dawn. Prayer flags fluttered on the wind, their colors muted by elevation, while the valley below yawned awake in a sea of clouds.",
+    "Aboard a slow river barge, lantern light danced across rippling waters. Reed beds swayed gently, and the sky blushed in soft yellow as dawn slipped into day.",
+    "In an autumnal clearing, crimson maples stood sentinel around a silent pond. Fallen leaves formed a patchwork quilt upon the water, each circle echoing the season’s gentle farewell.",
+    "Within a sunflower field at midday, golden heads nodded under a pale blue sky. The hum of wings and the warmth of the sun created a lullaby of summer’s full bloom.",
+    "On a secluded beach at early dawn, driftwood lay scattered like silent sculptures. The horizon glowed with promise, and each wave carried a whisper of distant adventures.",
+    "In a cool, shaded grove of bamboo, light filtered through slender stalks in dappled patterns. The steady creak and sway spoke of resilience and quiet grace.",
+    "High above the world on a cliff, the traveler watched storm clouds gather over an endless ocean. Lightning traced silver veins across the sky, yet the air remained charged with a calm expectancy.",
+    "Along a winding forest path, mushrooms glowed faintly in the undergrowth. A carpet of pine needles muted footsteps, and the hush invited contemplation of life’s small wonders.",
+    "In a rose garden at dusk, petals soft as silk released their sweet perfume. Fireflies emerged in gentle flurries, like tiny stars come to dance among the blooms.",
+    "On a mist-wreathed bridge in an old town, lanterns swung with each breeze. The river below carried remnants of lantern light, twinkling like memory in motion.",
+    "Within a sunlit orchard, apple trees bent under their blush fruits. Bees and birds flitted among branches, composing a quiet symphony of summer’s abundance.",
+    "Inside a hidden chapel carved into living rock, candlelight flickered against rough stone. The hush enveloped every visitor in a sense of sacred stillness.",
+    "At a windswept plateau, grass rippled in waves beneath a cloud-strewn sky. The horizon seemed endless, offering a gentle reminder of boundless possibility.",
+    "Down a quiet canal at dusk, houseboats lay anchored in pastel reflections. Water lapped softly, and the air held the faint scent of evening jasmine.",
+    "In a winter cabin warmed by a crackling hearth, snow blanketed the world outside. Each log’s glow cast dancing shadows, weaving stories into the silent night.",
+    "On a moonlit terrace overlooking vineyards, tendrils of jasmine scented the air. Nightingales sang unseen, their notes lingering like soft petals on a gentle breeze.",
+    "Amid rolling dunes under a violet sky, shadows stretched long before night. A single lantern by a weathered tent offered a place of quiet reprieve.",
+    "In a misty rainforest, orchids dripped with dew. A chorus of frogs and distant waterfalls invited the heart into a peaceful, primeval lullaby."
+  ];
+
+    // Play music immediately
+    const bgMusic = document.getElementById('bgMusic');
+    bgMusic.volume = 0.3;
+    bgMusic.play().catch(() => {});
+
+    // Mute toggle
+    const muteBtn = document.getElementById('muteBtn');
+    muteBtn.addEventListener('click', () => {
+      bgMusic.muted = !bgMusic.muted;
+      muteBtn.textContent = bgMusic.muted ? '🔇' : '🔊';
+    });
+
+    // Parallax layers setup
+    const layers = [
+      { canvas: document.getElementById('particles-bg'), speed: 0.2, count: 50, size: [3,5], alpha: [0.05,0.2] },
+      { canvas: document.getElementById('particles-md'), speed: 0.5, count: 75, size: [2,4], alpha: [0.1,0.4] },
+      { canvas: document.getElementById('particles-fg'), speed: 1.0, count: 100, size: [1,3], alpha: [0.2,0.6] }
+    ];
+    layers.forEach(layer => {
+      const c = layer.canvas; const ctx = c.getContext('2d'); let parts = [];
+      function resize(){ c.width = innerWidth; c.height = innerHeight; }
+      function init(){ parts = []; for(let i=0;i<layer.count;i++) parts.push({ x:Math.random()*c.width, y:Math.random()*c.height, r:Math.random()*(layer.size[1]-layer.size[0])+layer.size[0], dy:Math.random()*layer.speed+0.1, alpha:Math.random()*(layer.alpha[1]-layer.alpha[0])+layer.alpha[0] }); }
+      function draw(){ ctx.clearRect(0,0,c.width,c.height); parts.forEach(p=>{ ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,2*Math.PI); ctx.fillStyle = `rgba(255,255,255,${p.alpha})`; ctx.fill(); p.y -= p.dy; if(p.y< -p.r) p.y = c.height + p.r; }); requestAnimationFrame(draw); }
+      window.addEventListener('resize', () => { resize(); init(); }); resize(); init(); draw();
+    });
+
+    // Theme & Game logic (unchanged except music)
+const themes = {
+  dawn: {
+    bg: 'linear-gradient(135deg,#FFA17F 0%,#00223E 100%)',
+    ghost: '#FFE5B4',
+    correct: '#FFFFFF'
+  },
+  dusk: {
+    bg: 'linear-gradient(135deg,#2C3E50 0%,#FD746C 100%)',
+    ghost: '#D3D3D3',
+    correct: '#FFFFFF'
+  },
+  forest: {
+    bg: 'linear-gradient(135deg,#134E5E 0%,#71B280 100%)',
+    ghost: '#BFD8B8',
+    correct: '#F0FFF0'
+  },
+  ocean: {
+    bg: 'linear-gradient(135deg,#00C9FF 0%,#92FE9D 100%)',
+    ghost: '#D0F0FD',
+    correct: '#FFFFFF'
+  },
+  night: {
+    bg: 'linear-gradient(135deg,#0f2027 0%,#203a43 50%,#2c5364 100%)',
+    ghost: '#AAB8C2',
+    correct: '#FFFFFF'
+  },
+  sunset: {
+    bg: 'linear-gradient(135deg,#ff9a9e 0%,#fad0c4 100%)',
+    ghost: '#FFECE7',
+    correct: '#FFFFFF'
+  },
+  rainbow: {
+    bg: 'linear-gradient(135deg,#f6d365 0%,#fda085 20%,#fbc2eb 40%,#a6c1ee 60%,#84fab0 80%,#8fd3f4 100%)',
+    ghost: '#FFFFFF',
+    correct: '#000000'
+  },
+  autumn: {
+    bg: 'linear-gradient(135deg,#e96443 0%,#904e95 100%)',
+    ghost: '#F5D6C6',
+    correct: '#FFFFFF'
+  },
+};
+    let chars,idx,startTime,tot,correct;
+    const bodyEl=document.body, overlay=document.getElementById('themeOverlay'), titleEl=document.getElementById('titleScreen'), themeNameEl2=document.getElementById('themeName'), wrapEl=document.getElementById('enterWrap'), dynEl=document.getElementById('dynamicWrap'), wpmEl2=document.getElementById('wpm'), accEl2=document.getElementById('acc'), endEl=document.getElementById('endScreen');
+    const keys=Object.keys(themes); let idxTheme=0;
+    function applyTheme2(k){const t=themes[k]; document.documentElement.style.setProperty('--bg-gradient',t.bg); document.documentElement.style.setProperty('--ghost-color',t.ghost); document.documentElement.style.setProperty('--correct-color',t.correct); themeNameEl2.textContent=k; }
+    applyTheme2(keys[idxTheme]);
+    function cycleTheme2(){ overlay.style.opacity=1; setTimeout(()=>{ idxTheme=(idxTheme+1)%keys.length; applyTheme2(keys[idxTheme]); overlay.style.opacity=0; },500); }
+    bodyEl.addEventListener('keydown',e=>{ if(!bodyEl.classList.contains('game-start')&&e.code==='Space'){ e.preventDefault(); cycleTheme2(); } if(e.key==='Enter'){ if(bodyEl.classList.contains('game-end')){ overlay.style.opacity=1; setTimeout(()=>{ endEl.classList.remove('fade-in'); titleEl.classList.remove('fade-out'); titleEl.classList.add('fade-in'); bodyEl.classList.remove('game-end'); overlay.style.opacity=0; },500);} else if(!bodyEl.classList.contains('game-start')){ titleEl.classList.add('fade-out'); setTimeout(startGame2,1000);} } });
+function startGame2() {
+  titleEl.classList.remove('fade-in');
+  titleEl.classList.add('fade-out');
+  setTimeout(() => {
+    bodyEl.classList.add('game-start');
+
+    // Play music HERE on user gesture
+    bgMusic.volume = 0.3;
+    bgMusic.play().catch(err => console.log('Autoplay blocked:', err));
+
+    initTest2();
+  }, 1000);
+}
+    function initTest2(){ tot=0; correct=0; wpmEl2.textContent=0; accEl2.textContent=100; dynEl.innerHTML=''; idx=0; const p=texts[Math.floor(Math.random()*texts.length)]; chars=p.split('').map(c=>{const s=document.createElement('span'); s.textContent=c; dynEl.appendChild(s); return s;}); chars[0].classList.add('caret'); chase2(); startTime=null; document.addEventListener('keydown',type2); setTimeout(()=>wrapEl.style.transform='translateX(0)',50); }
+    function chase2(){ const c=chars[idx], off=Math.max(c.offsetLeft-window.innerWidth*0.25,0); dynEl.style.transform=`translateX(${-off}px)`; }
+function type2(e) {
+  // Start timer on first keypress
+  if (!startTime) startTime = Date.now();
+  // Only handle character keys and Backspace
+  if (e.key.length !== 1 && e.key !== 'Backspace') return;
+  e.preventDefault();
+  tot++;
+
+  const s = chars[idx];
+  const expected = s.textContent;
+  const input    = e.key;
+  // Treat straight apostrophe ' as correct when expected is curly ’
+  const isApos   = expected === '’' && input === "'";
+
+  if (input === expected || isApos) {
+    // Correct key
+    correct++;
+    s.classList.remove('caret');
+    s.classList.add('correct');
+    idx++;
+  } else if (input === 'Backspace' && idx > 0) {
+    // Handle backspace: move back one character
+    chars[idx].classList.remove('caret');
+    idx--;
+    chars[idx].classList.remove('correct', 'incorrect');
+    chars[idx].classList.add('caret');
+    updateStats2();
+    chase2();
+    return;
+  } else {
+    // Incorrect key: flash red
+    s.classList.add('incorrect');
+    setTimeout(() => s.classList.remove('incorrect'), 100);
+  }
+
+  // Move caret or end test
+  if (idx < chars.length) {
+    chars.forEach(x => x.classList.remove('caret'));
+    chars[idx].classList.add('caret');
+    chase2();
+  } else {
+    updateStats2();
+    endTest2();
+    return;
+  }
+
+  updateStats2();
+}
+    function updateStats2(){ const m=(Date.now()-startTime)/60000||1/60; wpmEl2.textContent=Math.round((correct/5)/m); accEl2.textContent=Math.round((correct/tot)*100)||0; }
+    function endTest2(){ document.removeEventListener('keydown',type2); bodyEl.classList.remove('game-start'); bodyEl.classList.add('game-end'); endEl.classList.add('fade-in'); }
+  </script>
+</body>
+</html>
