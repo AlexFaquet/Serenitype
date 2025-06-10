@@ -51,6 +51,38 @@
       opacity: 0; transition: opacity 0.5s ease;
       z-index: 9;
     }
+#themeHint {
+  position: absolute;
+  bottom: 1rem;
+  width: 100%;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--ghost-color);
+  z-index: 10;
+  opacity: 0;                  /* start hidden */
+  transition: opacity 0.5s ease; /* smooth fade */
+}
+
+/* show on title screen only */
+body:not(.game-start):not(.game-end) #themeHint {
+  opacity: 0.6;
+}
+
+/* hide during play or on end screen */
+body.game-start #themeHint,
+body.game-end   #themeHint {
+  opacity: 0;
+}
+
+@media (max-width: 700px) {
+  #themeHint {
+    display: none;
+  }
+}
+
+
+
+
     /* Mute button */
     #muteBtn {
       position: absolute; top: 1rem; right: 1rem;
@@ -310,13 +342,55 @@ const themes = {
     correct: '#FFFFFF'
   },
 };
+
+const themeNameEl = document.getElementById('themeName');
+// Theme tap: switch theme if tapped on themeName
+let themeTapUsed = false;
+const themeTapHandler = function(e) {
+  if (isMobile()) themeTapUsed = true;
+  // Only when on title screen (not playing / not ended)
+  if (!document.body.classList.contains('game-start') && !document.body.classList.contains('game-end')) {
+    e.preventDefault();
+    e.stopPropagation(); // prevent body handler from also firing
+    cycleTheme2();
+  }
+};
+// ensure we don’t add multiple listeners:
+themeNameEl.removeEventListener('touchstart', themeTapHandler);
+themeNameEl.addEventListener('touchstart', themeTapHandler, { passive: false });
+themeNameEl.addEventListener('click', function(e) {
+  if (themeTapUsed) {
+    themeTapUsed = false;
+    return;
+  }
+  if (!document.body.classList.contains('game-start') && !document.body.classList.contains('game-end')) {
+    e.preventDefault();
+    e.stopPropagation();
+    cycleTheme2();
+  }
+});
+themeNameEl.addEventListener('touchstart', themeTapHandler, { passive: false });
+themeNameEl.addEventListener('click', function(e) {
+  if (themeTapUsed) {
+    themeTapUsed = false;
+    return;
+  }
+  if (!document.body.classList.contains('game-start') && !document.body.classList.contains('game-end')) {
+    e.preventDefault();
+    e.stopPropagation();
+    cycleTheme2();
+  }
+});
+// body click to start is probably not set up, but if you have click-to-start on desktop, the same stopPropagation logic applies.
+
     let chars,idx,startTime,tot,correct;
     const bodyEl=document.body, overlay=document.getElementById('themeOverlay'), titleEl=document.getElementById('titleScreen'), themeNameEl2=document.getElementById('themeName'), wrapEl=document.getElementById('enterWrap'), dynEl=document.getElementById('dynamicWrap'), wpmEl2=document.getElementById('wpm'), accEl2=document.getElementById('acc'), endEl=document.getElementById('endScreen');
     const keys=Object.keys(themes); let idxTheme=0;
     function applyTheme2(k){const t=themes[k]; document.documentElement.style.setProperty('--bg-gradient',t.bg); document.documentElement.style.setProperty('--ghost-color',t.ghost); document.documentElement.style.setProperty('--correct-color',t.correct); themeNameEl2.textContent=k; }
     applyTheme2(keys[idxTheme]);
     function cycleTheme2(){ overlay.style.opacity=1; setTimeout(()=>{ idxTheme=(idxTheme+1)%keys.length; applyTheme2(keys[idxTheme]); overlay.style.opacity=0; },500); }
-    bodyEl.addEventListener('keydown',e=>{ if(!bodyEl.classList.contains('game-start')&&e.code==='Space'){ e.preventDefault(); cycleTheme2(); } if(e.key==='Enter'){ if(bodyEl.classList.contains('game-end')){ overlay.style.opacity=1; setTimeout(()=>{ endEl.classList.remove('fade-in'); titleEl.classList.remove('fade-out'); titleEl.classList.add('fade-in'); bodyEl.classList.remove('game-end'); overlay.style.opacity=0; },500);} else if(!bodyEl.classList.contains('game-start')){ titleEl.classList.add('fade-out'); setTimeout(startGame2,1000);} } });
+    bodyEl.addEventListener('keydown',e=>{ if(!bodyEl.classList.contains('game-start')&&e.code==='Space'){ e.preventDefault(); cycleTheme2(); } if(e.key==='Enter'){ if(bodyEl.classList.contains('game-end')){ overlay.style.opacity=1; setTimeout(()=>{ endEl.classList.remove('fade-in'); titleEl.classList.remove('fade-out'); titleEl.classList.add('fade-in'); bodyEl.classList.remove('game-end'); overlay.style.opacity=0;     
+},500);} else if(!bodyEl.classList.contains('game-start')){ titleEl.classList.add('fade-out'); setTimeout(startGame2,1000);} } });
 function startGame2() {
   titleEl.classList.remove('fade-in');
   titleEl.classList.add('fade-out');
@@ -426,8 +500,10 @@ function type2(e) {
       if (isMobile()) {
         mobileInput.value = '';
         lastMobileValue = '';
+
         updateMobileInputVisibility();
       }
+
     };
     const origEndTest2 = endTest2;
     endTest2 = function() {
@@ -502,6 +578,21 @@ function type2(e) {
       origEndTest2Mobile();
       updateEndPromptForMobile();
     };
+
+    // Hide themeHint on mobile devices
+function updateThemeHintVisibility() {
+  var themeHint = document.getElementById('themeHint');
+  if (!themeHint) return;
+  if (isMobile()) {
+    themeHint.style.display = 'none';
+  } else {
+    themeHint.style.display = '';
+  }
+}
+updateThemeHintVisibility();
+window.addEventListener('resize', updateThemeHintVisibility);
   </script>
+  <div id="themeHint">Press Space to switch themes</div>
+
 </body>
 </html>
