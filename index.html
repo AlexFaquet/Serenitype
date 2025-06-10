@@ -433,6 +433,31 @@ function type2(e) {
 
     // Also update on state changes
     document.body.addEventListener('transitionend', updateMobileInputVisibility);
+
+    // Update start prompt and allow tap to start on mobile
+    function updateStartPromptForMobile() {
+      if (isMobile()) {
+        document.getElementById('pressEnter').textContent = 'Tap screen to start';
+        // Add tap-to-start event
+        const tapHandler = function(e) {
+          if (!document.body.classList.contains('game-start') && !document.body.classList.contains('game-end')) {
+            e.preventDefault();
+            titleEl.classList.add('fade-out');
+            setTimeout(startGame2, 1000);
+          }
+        };
+        // Remove previous to avoid duplicates
+        document.body.removeEventListener('touchstart', tapHandler);
+        document.body.addEventListener('touchstart', tapHandler, { passive: false });
+      } else {
+        document.getElementById('pressEnter').textContent = 'Press Enter To Play';
+        document.body.removeEventListener('touchstart', ()=>{});
+      }
+    }
+    // Call on load
+    updateStartPromptForMobile();
+    // Also call on resize in case device orientation changes
+    window.addEventListener('resize', updateStartPromptForMobile);
   </script>
 </body>
 </html>
