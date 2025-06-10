@@ -79,6 +79,8 @@
       }
     }
 
+    
+
     /* Mute button */
     #muteBtn {
       position: absolute; top: 1rem; right: 1rem;
@@ -173,6 +175,14 @@
     }
     @keyframes blink {50%{border-color:transparent;}}
 
+    #mobileInputWrap {
+  display: none;
+}
+body.game-start #mobileInputWrap {
+  display: block;
+}
+
+
     /* End stats */
     #endScreen {
       opacity: 0; pointer-events: none;
@@ -255,6 +265,19 @@
       <div id="dynamicWrap"></div>
     </div>
   </div>
+
+  <!-- inside body, e.g. just after titleScreen/endScreen -->
+<div id="mobileInputWrap">
+  <input id="mobileInput" type="text" autocomplete="off" autocorrect="off"
+         autocapitalize="off" spellcheck="false"
+         placeholder="Type here..."
+         style="position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%); 
+                width: 90%; max-width: 400px; padding: 0.8rem; font-size: 1.2rem;
+                border-radius: 1.5rem; border: none; outline: none;
+                background: rgba(255,255,255,0.1); color: var(--correct-color);
+                z-index: 20;"/>
+</div>
+
 
   <!-- End stats -->
   <div id="endScreen">
@@ -432,17 +455,19 @@
 
   // Start game: fade out title, then add .game-start
 function startGame2() {
+  // fade-out already done
   setTimeout(() => {
     bodyEl.classList.add('game-start');
-    // Focus mobile input immediately so keyboard shows when game starts
     if (isMobile()) {
-      const mobileInput = document.getElementById('mobileInput') 
-                        || document.getElementById('hiddenMobileInput');
-      if (mobileInput) mobileInput.focus();
+      const mobileInput = document.getElementById('mobileInput');
+      if (mobileInput) {
+        mobileInput.focus();
+      }
     }
     initTest2();
   }, 1000);
 }
+
 
 
   // Initialize a new typing test
@@ -527,6 +552,23 @@ function startGame2() {
     updateStats2();
   }
 
+  const mobileInput = document.getElementById('mobileInput');
+mobileInput.addEventListener('input', function(e) {
+  const val = mobileInput.value;
+  if (val.length > 0) {
+    const char = val.slice(-1);
+    type2({ key: char, preventDefault: ()=>{} });
+    mobileInput.value = '';
+  }
+});
+mobileInput.addEventListener('keydown', function(e) {
+  if (e.key === 'Backspace') {
+    type2({ key: 'Backspace', preventDefault: ()=>{} });
+    e.preventDefault();
+  }
+});
+
+
   // Update WPM and accuracy display
   function updateStats2() {
     const m = (Date.now() - startTime) / 60000 || 1/60;
@@ -544,19 +586,14 @@ function startGame2() {
 
   // Touch caret movement during gameplay
 function onTextTouch(e) {
-  // Only act during gameplay
   if (!bodyEl.classList.contains('game-start')) return;
   e.preventDefault();
-
   if (isMobile()) {
-    // Focus the mobile input so keyboard pops up
-    const mobileInput = document.getElementById('mobileInput') 
-                      || document.getElementById('hiddenMobileInput');
+    const mobileInput = document.getElementById('mobileInput');
     if (mobileInput) {
       mobileInput.focus();
     }
-
-    // Lock caret to front
+    // lock caret to front
     const spans = document.querySelectorAll('#dynamicWrap span');
     if (!spans.length) return;
     spans.forEach(s => s.classList.remove('caret'));
@@ -564,8 +601,8 @@ function onTextTouch(e) {
     idx = 0;
     chase2();
   }
-  // On desktop touch, do nothing (caret stays keyboard-controlled)
 }
+
 
 
   // Attach once
