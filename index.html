@@ -166,27 +166,6 @@ body.game-end   #themeHint {
     body.game-end #resultWPM, body.game-end #resultAcc { opacity: 1; }
 
     /* Mobile input styles */
-    #mobileInputWrap {
-      display: none;
-      position: fixed;
-      left: 0; right: 0; bottom: 0;
-      width: 100vw;
-      background: rgba(30,30,47,0.95);
-      z-index: 20;
-      padding: 1rem 2vw;
-      box-shadow: 0 -2px 16px rgba(0,0,0,0.2);
-    }
-    #mobileInput {
-      width: 100%;
-      font-size: 1.5rem;
-      padding: 0.7rem 1rem;
-      border-radius: 1.5rem;
-      border: none;
-      outline: none;
-      background: #22243a;
-      color: var(--correct-color);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
     @media (max-width: 700px) {
       html, body { height: 100dvh; }
       body {
@@ -199,7 +178,32 @@ body.game-end   #themeHint {
       #dynamicWrap { font-size: 8vw; }
       #resultWPM, #resultAcc { font-size: 7vw; }
       #muteBtn { font-size: 2.5rem; top: 0.5rem; right: 0.5rem; }
-      #mobileInputWrap { display: block; }
+    }
+
+    #tapToStartMobile {
+      display: none;
+      position: absolute;
+      left: 0; right: 0;
+      top: 65%;
+      transform: translateY(-50%);
+      text-align: center;
+      font-size: 1.1rem;
+      color: var(--ghost-color);
+      opacity: 0.7;
+      z-index: 12;
+      pointer-events: none;
+      animation: breathe 2s ease-in-out infinite;
+      transition: opacity 0.5s ease;
+    }
+    @media (max-width: 700px) {
+      #tapToStartMobile {
+        display: block;
+        font-size: 4vw;
+      }
+      body.game-start #tapToStartMobile,
+      body.game-end #tapToStartMobile {
+        display: none;
+      }
     }
   </style>
 </head>
@@ -217,16 +221,13 @@ body.game-end   #themeHint {
   <div id="titleScreen">
     <h1>Serenitype</h1>
     <div id="themeName"></div>
-    <div id="pressEnter">Press Enter To Play</div>
+    <div id="pressEnter"></div>
+    <div id="themeHint">Press Space to switch themes</div>
+    <div id="tapToStartMobile">Tap to start</div>
   </div>
 
   <!-- Typing area -->
   <div id="text"><div id="enterWrap"><div id="dynamicWrap"></div></div></div>
-
-  <!-- Mobile input (hidden on desktop) -->
-  <div id="mobileInputWrap">
-    <input id="mobileInput" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Type here..." />
-  </div>
 
   <!-- End stats -->
   <div id="endScreen">
@@ -461,79 +462,65 @@ function type2(e) {
     function isMobile() {
       return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|Mobile/i.test(navigator.userAgent);
     }
-    const mobileInputWrap = document.getElementById('mobileInputWrap');
-    const mobileInput = document.getElementById('mobileInput');
-    let lastMobileValue = '';
 
-    // Show/hide mobile input based on device and game state
-    function updateMobileInputVisibility() {
-      if (isMobile() && document.body.classList.contains('game-start')) {
-        mobileInputWrap.style.display = 'block';
-        setTimeout(() => mobileInput.focus(), 100);
-      } else {
-        mobileInputWrap.style.display = 'none';
-        mobileInput.blur();
-      }
-    }
-
-    // Listen for input on mobile and simulate keydown events
-    if (isMobile()) {
-      mobileInput.addEventListener('input', function(e) {
-        let val = mobileInput.value;
-        // Only process new character or backspace
-        if (val.length < lastMobileValue.length) {
-          // Backspace
-          type2({ key: 'Backspace', preventDefault: ()=>{}, keyCode:8 });
-        } else if (val.length > lastMobileValue.length) {
-          // New character
-          let newChar = val.slice(-1);
-          type2({ key: newChar, preventDefault: ()=>{}, keyCode: newChar.charCodeAt(0) });
-        }
-        lastMobileValue = val;
-      });
-    }
-
-    // Patch startGame2 and endTest2 to show/hide mobile input
+    // Patch startGame2 to ensure caret is visible at the start after tapping
     const origStartGame2 = startGame2;
     startGame2 = function() {
       origStartGame2();
       if (isMobile()) {
-        mobileInput.value = '';
-        lastMobileValue = '';
-
-        updateMobileInputVisibility();
-      }
-
-    };
-    const origEndTest2 = endTest2;
-    endTest2 = function() {
-      origEndTest2();
-      if (isMobile()) {
-        updateMobileInputVisibility();
+        // Place caret at the start of the paragraph
+        setTimeout(() => {
+          const spans = document.querySelectorAll('#dynamicWrap span');
+          if (spans.length) {
+            spans.forEach(x => x.classList.remove('caret'));
+            spans[0].classList.add('caret');
+          }
+        }, 100);
       }
     };
 
-    // Also update on state changes
-    document.body.addEventListener('transitionend', updateMobileInputVisibility);
+    // Allow tap on words to place caret at start on mobile during game
+function enableTapCaretOnMobile() {
+  if (!isMobile()) return;
+  const textArea = document.getElementById('text');
+  // Remove previous handler if any
+  textArea.removeEventListener('touchstart', window._serenitypeTapCaret, { passive: false });
+  window._serenitypeTapCaret = function(e) {
+    if (document.body.classList.contains('game-start')) {
+      e.preventDefault();
+      const spans = document.querySelectorAll('#dynamicWrap span');
+      if (spans.length) {
+        spans.forEach(x => x.classList.remove('caret'));
+        spans[0].classList.add('caret');
+      }
+    }
+  };
+  textArea.addEventListener('touchstart', window._serenitypeTapCaret, { passive: false });
+}
+// Call on load and on resize
+enableTapCaretOnMobile();
+window.addEventListener('resize', enableTapCaretOnMobile);
 
-    // Update start prompt and allow tap to start on mobile
+    // Update start prompt and allow tap to start on mobile by tapping the typing area
     function updateStartPromptForMobile() {
       if (isMobile()) {
-        document.getElementById('pressEnter').textContent = 'Tap screen to start';
-        // Add tap-to-start event
-        const tapHandler = function(e) {
+        document.getElementById('pressEnter').textContent = '';
+        // Remove previous tap handlers
+        document.getElementById('text').removeEventListener('touchstart', window._serenitypeTapToStart, { passive: false });
+        // Add tap-to-start event on the typing area
+        window._serenitypeTapToStart = function(e) {
           if (!document.body.classList.contains('game-start') && !document.body.classList.contains('game-end')) {
             e.preventDefault();
-            titleEl.classList.add('fade-out');
+            document.getElementById('titleScreen').classList.add('fade-out');
             setTimeout(startGame2, 1000);
           }
         };
-        // Remove previous to avoid duplicates
-        document.body.removeEventListener('touchstart', tapHandler);
-        document.body.addEventListener('touchstart', tapHandler, { passive: false });
+        document.getElementById('text').addEventListener('touchstart', window._serenitypeTapToStart, { passive: false });
       } else {
         document.getElementById('pressEnter').textContent = 'Press Enter To Play';
-        document.body.removeEventListener('touchstart', ()=>{});
+        if (window._serenitypeTapToStart) {
+          document.getElementById('text').removeEventListener('touchstart', window._serenitypeTapToStart, { passive: false });
+        }
       }
     }
     // Call on load
@@ -591,8 +578,54 @@ function updateThemeHintVisibility() {
 }
 updateThemeHintVisibility();
 window.addEventListener('resize', updateThemeHintVisibility);
+
+    // Show/hide tap-to-start prompt for mobile
+function updateTapToStartPrompt() {
+  var tapPrompt = document.getElementById('tapToStartMobile');
+  if (!tapPrompt) return;
+  if (isMobile() && !document.body.classList.contains('game-start') && !document.body.classList.contains('game-end')) {
+    tapPrompt.style.display = 'block';
+  } else {
+    tapPrompt.style.display = 'none';
+  }
+}
+updateTapToStartPrompt();
+window.addEventListener('resize', updateTapToStartPrompt);
+document.body.addEventListener('classChange', updateTapToStartPrompt);
+// Patch classList methods to dispatch classChange event
+(function(){
+  var origAdd = DOMTokenList.prototype.add;
+  var origRemove = DOMTokenList.prototype.remove;
+  DOMTokenList.prototype.add = function(){ origAdd.apply(this, arguments); this._dispatchClassChange(); };
+  DOMTokenList.prototype.remove = function(){ origRemove.apply(this, arguments); this._dispatchClassChange(); };
+  DOMTokenList.prototype._dispatchClassChange = function(){
+    var event = new Event('classChange');
+    document.body.dispatchEvent(event);
+  };
+})();
+
+const titleScreenEl = document.getElementById('titleScreen');
+
+titleScreenEl.addEventListener('touchstart', function(e) {
+  e.preventDefault();
+  if (e.target.closest('#themeName')) {
+    cycleTheme2();
+  } else {
+    titleScreenEl.classList.add('fade-out');
+    setTimeout(startGame2, 1000);
+  }
+}, { passive: false });
+
+// (Optionally) desktop click equivalent:
+titleScreenEl.addEventListener('click', function(e) {
+  if (e.target.closest('#themeName')) {
+    cycleTheme2();
+  } else {
+    titleScreenEl.classList.add('fade-out');
+    setTimeout(startGame2, 1000);
+  }
+});
   </script>
-  <div id="themeHint">Press Space to switch themes</div>
 
 </body>
 </html>
