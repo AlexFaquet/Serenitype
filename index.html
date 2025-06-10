@@ -452,6 +452,8 @@
 
   // Start game: fade out title, then add .game-start
 function startGame2() {
+  // Play music on user interaction (start of game)
+  bgMusic.play().catch(()=>{});
   setTimeout(() => {
     bodyEl.classList.add('game-start');
     if (isMobile()) {
