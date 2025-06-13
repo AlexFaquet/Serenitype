@@ -1,13 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>Serenitype – A Zen-Inspired Typing Game</title>
+<title>Serenitype: A Meditative Typing Game to Boost Focus and WPM</title>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Serenitype is a zen-inspired typing game that helps you relax while boosting your WPM. Enjoy ambient music, minimalist design, and fluid theme transitions.">
   <meta name="keywords" content="typing game, wpm, accuracy, minimalist typing, zen game, typing test, serenitype">
   <meta name="author" content="Your Name or Brand">
   <link rel="canonical" href="https://serenitype.app/" />
+
+  <!-- Open Graph -->
+<meta property="og:title" content="Serenitype – A Zen-Inspired Typing Game" />
+<meta property="og:description" content="Relax and improve your typing speed in a meditative experience with serene music and smooth transitions." />
+<meta property="og:url" content="https://serenitype.app/" />
+<meta property="og:type" content="website" />
+<meta property="og:image" content="https://serenitype.app/thumbnail.png" />
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Serenitype – A Zen-Inspired Typing Game">
+<meta name="twitter:description" content="A peaceful typing experience to sharpen your speed and focus.">
+<meta name="twitter:image" content="https://serenitype.app/thumbnail.png">
+
 
   <!-- Google tag -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z6RHYWZET5"></script>
@@ -576,8 +590,11 @@ window.addEventListener('DOMContentLoaded', () => {
     wrap.id = 'mobileInputWrap';
     // style via CSS class or inline:
     wrap.style.cssText = `
-      position: fixed; bottom: 1rem; left: 50%; transform: translateX(-50%);
-      width: 90%; max-width: 400px; z-index: 20;
+      position: fixed; bottom: 0; left: 0; right: 0;
+      width: 100vw; max-width: 100vw; z-index: 20;
+      background: rgba(0,0,0,0.7); /* match overlay, avoid inverted colors */
+      box-shadow: 0 -2px 16px rgba(0,0,0,0.2);
+      display: none;
     `;
     const inp = document.createElement('input');
     inp.id = 'mobileInput';
@@ -591,9 +608,23 @@ window.addEventListener('DOMContentLoaded', () => {
       width: 100%; padding: 0.8rem; font-size: 1.2rem;
       border-radius: 1.5rem; border: none; outline: none;
       background: rgba(255,255,255,0.1); color: var(--correct-color);
+      backdrop-filter: blur(2px);
     `;
     wrap.appendChild(inp);
     document.body.appendChild(wrap);
+
+    // --- Fix: Only show input when game is running ---
+    function updateMobileInputVisibility() {
+      if (bodyEl.classList.contains('game-start')) {
+        wrap.style.display = 'block';
+      } else {
+        wrap.style.display = 'none';
+      }
+    }
+    // Listen for class changes
+    const observer = new MutationObserver(updateMobileInputVisibility);
+    observer.observe(bodyEl, { attributes: true, attributeFilter: ['class'] });
+    updateMobileInputVisibility();
 
     // Attach listeners for mobileInput:
     inp.addEventListener('input', e => {
@@ -609,6 +640,15 @@ window.addEventListener('DOMContentLoaded', () => {
         type2({ key: 'Backspace', preventDefault: ()=>{} });
         e.preventDefault();
       }
+    });
+
+    // --- Fix: Scroll paragraph into view on input focus ---
+    inp.addEventListener('focus', () => {
+      setTimeout(() => {
+        const dyn = document.getElementById('dynamicWrap');
+        if (dyn) dyn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        window.scrollTo(0, 0); // extra: keep top visible
+      }, 200);
     });
 
     // Focus when starting game:
@@ -636,6 +676,13 @@ window.addEventListener('DOMContentLoaded', () => {
     bodyEl.classList.remove('game-start');
     bodyEl.classList.add('game-end');
     endEl.classList.add('fade-in');
+    // --- Fix: Blur and hide mobile input on game end ---
+    if (isMobile()) {
+      const mobileInput = document.getElementById('mobileInput');
+      const mobileInputWrap = document.getElementById('mobileInputWrap');
+      if (mobileInput) mobileInput.blur();
+      if (mobileInputWrap) mobileInputWrap.style.display = 'none';
+    }
   }
 
   // Touch caret movement during gameplay
