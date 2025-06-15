@@ -8,6 +8,8 @@
   <meta name="keywords" content="typing game, wpm, accuracy, minimalist typing, zen game, typing test, serenitype">
   <meta name="author" content="Your Name or Brand">
   <link rel="canonical" href="https://serenitype.app/" />
+  <link rel="icon" href="/favicon.png" type="image/png">
+
 
   <!-- Open Graph -->
 <meta property="og:title" content="Serenitype – A Zen-Inspired Typing Game" />
@@ -64,10 +66,15 @@
 
     /* Theme overlay */
     #themeOverlay {
-      position: absolute; inset: 0;
-      background: #000; pointer-events: none;
-      opacity: 0; transition: opacity 0.5s ease;
-      z-index: 9;
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #000;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      z-index: 2; /* Below titleScreen (z-index: 5) */
     }
 
     /* Subtitle for desktop */
@@ -81,9 +88,12 @@
       z-index: 10;
       opacity: 0;
       transition: opacity 0.5s ease;
+      transition-delay: 0s;
     }
     body:not(.game-start):not(.game-end) #themeHint {
       opacity: 0.6;
+      transition-delay: 0s;
+      pointer-events: auto;
     }
     body.game-start #themeHint,
     body.game-end   #themeHint {
@@ -97,53 +107,136 @@
 
     
 
-    /* Mute button */
-    #muteBtn {
+    /* Settings button */
+    #settingsBtn {
       position: absolute; top: 1rem; right: 1rem;
       background: rgba(255,255,255,0.2);
       border: none; padding: 0.4rem; border-radius: 50%;
       font-size: 1.5rem; color: var(--ghost-color);
       cursor: pointer; transition: opacity 0.3s;
-      z-index: 11;
+      z-index: 12;
     }
-    #muteBtn:hover { opacity: 0.7; }
+    #settingsBtn:hover { opacity: 0.7; }
 
-    /* Title & End screens */
-    #titleScreen, #endScreen {
-      position: absolute; inset: 0;
-      display: flex; flex-direction: column;
+    /* Settings modal */
+    #settingsModal {
+      display: none; position: fixed; z-index: 100;
+      left: 0; top: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.5);
       justify-content: center; align-items: center;
-      background: rgba(0,0,0,0.7);
-      z-index: 10; opacity: 1;
-      transition: opacity 1s ease;
-      pointer-events: auto;
+      backdrop-filter: blur(2px);
     }
-    /* When fading out, disable pointer-events so clicks pass through */
-    #titleScreen.fade-out {
-      opacity: 0;
-      pointer-events: none;
+    #settingsModal.active { display: flex; }
+    #settingsContent {
+      background: rgba(34,34,40,0.98); color: #fff; border-radius: 1.5rem;
+      padding: 2.2rem 2.7rem; min-width: 270px; box-shadow: 0 6px 36px #0007;
+      display: flex; flex-direction: column; gap: 1.5rem;
+      align-items: stretch;
+      font-family: 'Inter', sans-serif;
     }
-    #titleScreen h1 {
-      font-size: 8vw; color: var(--correct-color);
-      opacity: 0; animation: fadeIn 2s ease-in-out 0.5s forwards;
+    #settingsContent label {
+      display: flex; align-items: center; gap: 1.1em; font-size: 1.13em;
+      cursor: pointer;
+      user-select: none;
     }
-    #themeName {
-      margin-top: 1rem; font-size: 2.5vw;
-      color: var(--ghost-color);
-      opacity: 0; animation: fadeIn 1s ease-in-out 1s forwards;
-      text-transform: capitalize;
+    /* Custom toggle switch */
+    .toggle-switch {
+      position: relative;
+      width: 44px; height: 24px;
+      display: inline-block;
     }
-    #pressEnter, #endPrompt {
-      margin-top: 2rem; font-size: 2vw;
-      color: var(--ghost-color);
-      animation: breathe 2s ease-in-out infinite;
+    .toggle-switch input {
+      opacity: 0; width: 0; height: 0;
     }
-    @media (max-width: 700px) {
-  #pressEnter {
-    display: none;
-  }
-}
+    .toggle-slider {
+      position: absolute; cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(90deg, #3a3a4d 0%, #6e7fa3 100%);
+      border-radius: 24px;
+      transition: background 0.3s;
+    }
+    .toggle-switch input:checked + .toggle-slider {
+      background: linear-gradient(90deg, #7ed6a2 0%, #b8e994 100%);
+    }
+    .toggle-slider:before {
+      content: "";
+      position: absolute;
+      left: 4px; top: 4px;
+      width: 16px; height: 16px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 0.3s;
+      box-shadow: 0 2px 8px #0002;
+    }
+    .toggle-switch input:checked + .toggle-slider:before {
+      transform: translateX(20px);
+      background: #eafaf1;
+    }
+    #settingsContent button {
+      margin-top: 0.5em; padding: 0.8em 1.3em; border-radius: 1em; border: none;
+      background: linear-gradient(90deg, #3a3a4d 0%, #6e7fa3 100%);
+      color: #fff; font-size: 1.08em; cursor: pointer;
+      box-shadow: 0 2px 12px #0002;
+      transition: background 0.3s, color 0.3s, box-shadow 0.3s;
+      font-family: 'Inter', sans-serif;
+      letter-spacing: 0.02em;
+    }
+    #settingsContent button:hover {
+      background: linear-gradient(90deg, #7ed6a2 0%, #b8e994 100%);
+      color: #222;
+      box-shadow: 0 4px 18px #0003;
+    }
 
+    /* Stats modal */
+    #statsModal {
+      display: none; position: fixed; z-index: 100;
+      left: 0; top: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.5);
+      justify-content: center; align-items: center;
+      backdrop-filter: blur(2px);
+      transition: opacity 0.5s;
+      opacity: 0;
+    }
+    #statsModal.active {
+      display: flex;
+      opacity: 1;
+      animation: fadeIn 0.5s;
+    }
+    #statsContent {
+      background: rgba(34,34,40,0.98); color: #fff; border-radius: 1.5rem;
+      padding: 2.2rem 2.7rem; min-width: 270px; box-shadow: 0 6px 36px #0007;
+      display: flex; flex-direction: column; gap: 1.5rem;
+      align-items: stretch;
+      font-family: 'Inter', sans-serif;
+      border: 1.5px solid #444652;
+    }
+    #statsContent h2 { margin-bottom: 0.7em; }
+    #statsContent button {
+      margin-top: 0.5em; padding: 0.8em 1.3em; border-radius: 1em; border: none;
+      background: linear-gradient(90deg, #3a3a4d 0%, #6e7fa3 100%);
+      color: #fff; font-size: 1.08em; cursor: pointer;
+      box-shadow: 0 2px 12px #0002;
+      transition: background 0.3s, color 0.3s, box-shadow 0.3s;
+      font-family: 'Inter', sans-serif;
+      letter-spacing: 0.02em;
+    }
+    #statsContent button:hover {
+      background: linear-gradient(90deg, #7ed6a2 0%, #b8e994 100%);
+      color: #222;
+      box-shadow: 0 4px 18px #0003;
+    }
+
+    /* Fade animations for modals */
+    .modal-fade-in {
+      animation: fadeIn 0.5s forwards;
+    }
+    .modal-fade-out {
+      animation: fadeOut 0.5s forwards;
+    }
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
     @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
     @keyframes breathe {0%{opacity:0.4;}50%{opacity:0.8;}100%{opacity:0.4;} }
 
@@ -180,6 +273,10 @@
       color: #f66; opacity: 1;
       animation: shake 0.2s;
     }
+    #dynamicWrap span.mistyped {
+      color: #f66 !important;
+      opacity: 1 !important;
+    }
     @keyframes shake {
       0%{transform:translateX(0);}25%{transform:translateX(-2px);}
       50%{transform:translateX(2px);}75%{transform:translateX(-2px);}
@@ -207,18 +304,64 @@
 
     /* End stats */
     #endScreen {
-      opacity: 0; pointer-events: none;
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.82);
+      z-index: 20;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s;
     }
     body.game-end #endScreen {
-      opacity: 1; pointer-events: auto;
+      opacity: 1;
+      pointer-events: auto;
     }
     #resultWPM, #resultAcc {
-      font-size: 4vw; margin: 0.5rem 0;
+      font-size: 4vw;
+      margin: 0.5rem 0 0.2rem 0;
       color: var(--correct-color);
-      opacity: 0; transition: opacity 1s ease;
+      opacity: 1;
+      text-align: center;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      text-shadow: 0 2px 16px #0007;
     }
-    body.game-end #resultWPM,
-    body.game-end #resultAcc { opacity: 1; }
+    #endPrompt {
+      font-size: 1.3vw;
+      color: var(--ghost-color);
+      opacity: 0.8;
+      margin-top: 1.2rem;
+      font-weight: 400;
+      letter-spacing: 0.01em;
+      text-align: center;
+      animation: breathe 2.2s ease-in-out infinite;
+    }
+    @media (max-width: 700px) {
+      #endScreen {
+        padding: 0 2vw;
+      }
+      #resultWPM, #resultAcc {
+        font-size: 7vw;
+      }
+      #endPrompt {
+        font-size: 4vw;
+      }
+    }
+    body.game-end #titleScreen {
+      display: none;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    body:not(.game-end) #titleScreen {
+      display: flex;
+    }
 
     /* Mobile-specific adjustments */
     @media (max-width: 700px) {
@@ -232,7 +375,7 @@
       #pressEnter, #endPrompt { font-size: 4vw; }
       #dynamicWrap { font-size: 8vw; }
       #resultWPM, #resultAcc { font-size: 7vw; }
-      #muteBtn { font-size: 2.5rem; top: 0.5rem; right: 0.5rem; }
+      #settingsBtn { font-size: 2.5rem; top: 0.5rem; right: 0.5rem; }
     }
 
     /* Tap-to-start prompt inside title */
@@ -260,6 +403,97 @@
         display: none;
       }
     }
+
+    /* Title screen centering and layout */
+    #titleScreen {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      z-index: 5;
+      background: rgba(0,0,0,0.72); /* Darker, full screen shade */
+      pointer-events: auto;
+      text-align: center;
+      min-height: 0;
+      transition: background 0.7s cubic-bezier(0.4,0,0.2,1);
+    }
+    body.game-start #titleScreen {
+      background: transparent;
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.5s, background 0.7s cubic-bezier(0.4,0,0.2,1), visibility 0s 0.5s;
+    }
+    body.game-end #titleScreen {
+      background: rgba(0,0,0,0.72);
+      pointer-events: auto;
+      opacity: 1;
+      visibility: visible;
+      transition: opacity 0.5s, background 0.7s cubic-bezier(0.4,0,0.2,1), visibility 0s;
+    }
+    #titleScreen h1 {
+      font-family: 'Inter', sans-serif;
+      font-size: 7vw;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      color: var(--correct-color);
+      margin-bottom: 0.1em;
+      margin-top: 0;
+      line-height: 1.05;
+      text-shadow: 0 4px 32px #0007, 0 1px 0 #0008;
+    }
+    #themeName {
+      font-size: 2vw;
+      color: var(--ghost-color);
+      margin-bottom: 0.1em;
+      margin-top: 0;
+      font-weight: 300;
+      letter-spacing: 0.01em;
+      text-transform: capitalize;
+      font-family: 'Inter', sans-serif;
+      line-height: 1.1;
+    }
+    #pressEnter {
+      font-size: 1.5vw;
+      color: var(--ghost-color);
+      opacity: 0.8;
+      margin-top: 0.1em;
+      margin-bottom: 0;
+      font-weight: 400;
+      letter-spacing: 0.01em;
+      font-family: 'Inter', sans-serif;
+      line-height: 1.1;
+      animation: breathe 2.2s ease-in-out infinite;
+    }
+    @media (max-width: 700px) {
+      #pressEnter {
+        display: none;
+      }
+    }
+    @media (max-width: 700px) {
+      #titleScreen {
+        gap: 0.3rem;
+      }
+      #titleScreen h1 {
+        font-size: 16vw;
+      }
+      #themeName {
+        font-size: 5vw;
+      }
+      #pressEnter {
+        font-size: 4vw;
+      }
+    }
+
+    /* Background music */
+    #bgMusic {
+      display: none;
+    }
   </style>
 </head>
 <body tabindex="0">
@@ -269,8 +503,33 @@
   <canvas id="particles-fg" layer="fg"></canvas>
 
   <div id="themeOverlay"></div>
-  <!-- Mute toggle -->
-  <button id="muteBtn">🔊</button>
+  <!-- Settings button -->
+  <button id="settingsBtn">⚙️</button>
+  <div id="settingsModal">
+    <div id="settingsContent">
+      <label>Sound
+        <span class="toggle-switch">
+          <input type="checkbox" id="soundToggle">
+          <span class="toggle-slider"></span>
+        </span>
+      </label>
+      <label>Allow Mistypes
+        <span class="toggle-switch">
+          <input type="checkbox" id="mistypeToggle">
+          <span class="toggle-slider"></span>
+        </span>
+      </label>
+      <button id="viewStatsBtn">View Lifetime Stats</button>
+      <button id="closeSettingsBtn">Close</button>
+    </div>
+  </div>
+  <div id="statsModal">
+    <div id="statsContent">
+      <h2>Lifetime Stats</h2>
+      <div id="lifetimeStats"></div>
+      <button id="closeStatsBtn">Close</button>
+    </div>
+  </div>
 
   <!-- Title screen -->
   <div id="titleScreen">
@@ -339,123 +598,83 @@
   // Background music element
   const bgMusic = document.getElementById('bgMusic');
   bgMusic.volume = 0.3;
-  bgMusic.play().catch(() => {});
 
-  // Mute toggle
-  const muteBtn = document.getElementById('muteBtn');
-  muteBtn.addEventListener('click', () => {
-    bgMusic.muted = !bgMusic.muted;
-    muteBtn.textContent = bgMusic.muted ? '🔇' : '🔊';
-  });
+  // Settings modal logic
+  const settingsBtn = document.getElementById('settingsBtn');
+  const settingsModal = document.getElementById('settingsModal');
+  const soundToggle = document.getElementById('soundToggle');
+  const mistypeToggle = document.getElementById('mistypeToggle');
+  const viewStatsBtn = document.getElementById('viewStatsBtn');
+  const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+  const statsModal = document.getElementById('statsModal');
+  const closeStatsBtn = document.getElementById('closeStatsBtn');
+  const lifetimeStatsDiv = document.getElementById('lifetimeStats');
 
-  // Parallax particle layers
-  const layers = [
-    { canvas: document.getElementById('particles-bg'), speed: 0.2, count: 50, size: [3,5], alpha: [0.05,0.2] },
-    { canvas: document.getElementById('particles-md'), speed: 0.5, count: 75, size: [2,4], alpha: [0.1,0.4] },
-    { canvas: document.getElementById('particles-fg'), speed: 1.0, count: 100, size: [1,3], alpha: [0.2,0.6] }
-  ];
-  layers.forEach(layer => {
-    const c = layer.canvas;
-    const ctx = c.getContext('2d');
-    let parts = [];
-    function resize() {
-      c.width = innerWidth;
-      c.height = innerHeight;
-    }
-    function init() {
-      parts = [];
-      for (let i = 0; i < layer.count; i++) {
-        parts.push({
-          x: Math.random() * c.width,
-          y: Math.random() * c.height,
-          r: Math.random() * (layer.size[1] - layer.size[0]) + layer.size[0],
-          dy: Math.random() * layer.speed + 0.1,
-          alpha: Math.random() * (layer.alpha[1] - layer.alpha[0]) + layer.alpha[0]
-        });
-      }
-    }
-    function draw() {
-      ctx.clearRect(0, 0, c.width, c.height);
-      parts.forEach(p => {
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r, 0, 2 * Math.PI);
-        ctx.fillStyle = `rgba(255,255,255,${p.alpha})`;
-        ctx.fill();
-        p.y -= p.dy;
-        if (p.y < -p.r) p.y = c.height + p.r;
-      });
-      requestAnimationFrame(draw);
-    }
-    window.addEventListener('resize', () => { resize(); init(); });
-    resize();
-    init();
-    draw();
-  });
+  // State
+  let allowMistypes = JSON.parse(localStorage.getItem('allowMistypes') || 'false');
+  soundToggle.checked = !bgMusic.muted;
+  mistypeToggle.checked = allowMistypes;
 
-  // Theme definitions and functions
-  const themes = {
-    dawn: {
-      bg: 'linear-gradient(135deg,#FFA17F 0%,#00223E 100%)',
-      ghost: '#FFE5B4',
-      correct: '#FFFFFF'
-    },
-    dusk: {
-      bg: 'linear-gradient(135deg,#2C3E50 0%,#FD746C 100%)',
-      ghost: '#D3D3D3',
-      correct: '#FFFFFF'
-    },
-    forest: {
-      bg: 'linear-gradient(135deg,#134E5E 0%,#71B280 100%)',
-      ghost: '#BFD8B8',
-      correct: '#F0FFF0'
-    },
-    ocean: {
-      bg: 'linear-gradient(135deg,#00C9FF 0%,#92FE9D 100%)',
-      ghost: '#D0F0FD',
-      correct: '#FFFFFF'
-    },
-    night: {
-      bg: 'linear-gradient(135deg,#0f2027 0%,#203a43 50%,#2c5364 100%)',
-      ghost: '#AAB8C2',
-      correct: '#FFFFFF'
-    },
-    sunset: {
-      bg: 'linear-gradient(135deg,#ff9a9e 0%,#fad0c4 100%)',
-      ghost: '#FFECE7',
-      correct: '#FFFFFF'
-    },
-    rainbow: {
-      bg: 'linear-gradient(135deg,#f6d365 0%,#fda085 20%,#fbc2eb 40%,#a6c1ee 60%,#84fab0 80%,#8fd3f4 100%)',
-      ghost: '#FFFFFF',
-      correct: '#000000'
-    },
-    autumn: {
-      bg: 'linear-gradient(135deg,#e96443 0%,#904e95 100%)',
-      ghost: '#F5D6C6',
-      correct: '#FFFFFF'
-    }
+  settingsBtn.onclick = () => {
+    settingsModal.classList.add('active', 'modal-fade-in');
+    settingsModal.classList.remove('modal-fade-out');
   };
-  const keys = Object.keys(themes);
-  let idxTheme = 0;
-  const themeNameEl = document.getElementById('themeName');
-
-  function applyTheme2(key) {
-    const t = themes[key];
-    document.documentElement.style.setProperty('--bg-gradient', t.bg);
-    document.documentElement.style.setProperty('--ghost-color', t.ghost);
-    document.documentElement.style.setProperty('--correct-color', t.correct);
-    themeNameEl.textContent = key;
-  }
-  applyTheme2(keys[idxTheme]);
-
-  function cycleTheme2() {
-    document.getElementById('themeOverlay').style.opacity = '1';
+  closeSettingsBtn.onclick = () => {
+    settingsModal.classList.remove('modal-fade-in');
+    settingsModal.classList.add('modal-fade-out');
     setTimeout(() => {
-      idxTheme = (idxTheme + 1) % keys.length;
-      applyTheme2(keys[idxTheme]);
-      document.getElementById('themeOverlay').style.opacity = '0';
+      settingsModal.classList.remove('active', 'modal-fade-out');
     }, 500);
+  };
+  soundToggle.onchange = () => {
+    bgMusic.muted = !soundToggle.checked;
+    localStorage.setItem('soundMuted', bgMusic.muted);
+  };
+  mistypeToggle.onchange = () => {
+    allowMistypes = mistypeToggle.checked;
+    localStorage.setItem('allowMistypes', allowMistypes);
+  };
+  viewStatsBtn.onclick = () => {
+    settingsModal.classList.remove('modal-fade-in');
+    settingsModal.classList.add('modal-fade-out');
+    setTimeout(() => {
+      settingsModal.classList.remove('active', 'modal-fade-out');
+      showLifetimeStats();
+    }, 500);
+  };
+  closeStatsBtn.onclick = () => {
+    statsModal.classList.remove('modal-fade-in');
+    statsModal.classList.add('modal-fade-out');
+    setTimeout(() => {
+      statsModal.classList.remove('active', 'modal-fade-out');
+    }, 500);
+  };
+
+  // Persist sound setting
+  if (localStorage.getItem('soundMuted') === 'true') {
+    bgMusic.muted = true;
+    soundToggle.checked = false;
   }
+
+  // Lifetime stats logic
+  function getStats() {
+    return JSON.parse(localStorage.getItem('lifetimeStats') || '{"games":0,"totalWPM":0,"totalAcc":0,"bestWPM":0,"bestAcc":0}');
+  }
+  function saveStats(stats) {
+    localStorage.setItem('lifetimeStats', JSON.stringify(stats));
+  }
+  function showLifetimeStats() {
+    const stats = getStats();
+    lifetimeStatsDiv.innerHTML =
+      `<div>Games Played: <b>${stats.games}</b></div>`+
+      `<div>Best WPM: <b>${stats.bestWPM}</b></div>`+
+      `<div>Best Accuracy: <b>${stats.bestAcc}%</b></div>`+
+      `<div>Average WPM: <b>${stats.games ? Math.round(stats.totalWPM/stats.games) : 0}</b></div>`+
+      `<div>Average Accuracy: <b>${stats.games ? Math.round(stats.totalAcc/stats.games) : 0}%</b></div>`;
+    statsModal.classList.add('active', 'modal-fade-in');
+    statsModal.classList.remove('modal-fade-out');
+  }
+
   // Game state variables
   let chars = [], idx = 0, startTime = null, tot = 0, correct = 0;
   const bodyEl = document.body;
@@ -469,15 +688,16 @@
   // Start game: fade out title, then add .game-start
 function startGame2() {
   // Play music on user interaction (start of game)
-  bgMusic.play().catch(()=>{});
-  setTimeout(() => {
-    bodyEl.classList.add('game-start');
-    if (isMobile()) {
-      const mobileInput = document.getElementById('mobileInput');
-      if (mobileInput) mobileInput.focus();
-    }
-    initTest2();
-  }, 1000);
+  if (bgMusic.paused) {
+    bgMusic.currentTime = 0;
+    bgMusic.play().catch(()=>{});
+  }
+  bodyEl.classList.add('game-start');
+  if (isMobile()) {
+    const mobileInput = document.getElementById('mobileInput');
+    if (mobileInput) mobileInput.focus();
+  }
+  initTest2();
 }
 
 
@@ -541,11 +761,16 @@ function startGame2() {
       // backspace: move back
       chars[idx].classList.remove('caret');
       idx--;
-      chars[idx].classList.remove('correct', 'incorrect');
+      chars[idx].classList.remove('correct', 'incorrect', 'mistyped');
       chars[idx].classList.add('caret');
       updateStats2();
       chase2();
       return;
+    } else if (allowMistypes && input.length === 1 && idx < chars.length) {
+      // allow mistype: mark as mistyped, move forward
+      s.classList.remove('caret');
+      s.classList.add('mistyped');
+      idx++;
     } else {
       // incorrect: flash
       s.classList.add('incorrect');
@@ -683,6 +908,16 @@ window.addEventListener('DOMContentLoaded', () => {
       if (mobileInput) mobileInput.blur();
       if (mobileInputWrap) mobileInputWrap.style.display = 'none';
     }
+    // Save stats
+    const wpm = parseInt(wpmEl.textContent, 10) || 0;
+    const acc = parseInt(accEl.textContent, 10) || 0;
+    let stats = getStats();
+    stats.games++;
+    stats.totalWPM += wpm;
+    stats.totalAcc += acc;
+    if (wpm > stats.bestWPM) stats.bestWPM = wpm;
+    if (acc > stats.bestAcc) stats.bestAcc = acc;
+    saveStats(stats);
   }
 
   // Touch caret movement during gameplay
@@ -730,7 +965,16 @@ textEl.addEventListener('touchstart', onTextTouch, { passive: false });
       if (e.key === 'Enter') {
         e.preventDefault();
         titleScreenEl.classList.add('fade-out');
-        setTimeout(startGame2, 1000);
+        bodyEl.classList.add('fading-title');
+        setTimeout(() => {
+          bodyEl.classList.remove('fading-title');
+          bodyEl.classList.add('game-start');
+          if (isMobile()) {
+            const mobileInput = document.getElementById('mobileInput');
+            if (mobileInput) mobileInput.focus();
+          }
+          initTest2();
+        }, 0); // Make transition instant
       }
     }
     // If on end screen and Enter pressed, restart
@@ -740,6 +984,15 @@ textEl.addEventListener('touchstart', onTextTouch, { passive: false });
       titleScreenEl.classList.remove('fade-out');
       titleScreenEl.classList.add('fade-in');
       bodyEl.classList.remove('game-end');
+    }
+    // ESC: go back to main menu from game or end screen
+    if ((bodyEl.classList.contains('game-start') || bodyEl.classList.contains('game-end')) && e.key === 'Escape') {
+      e.preventDefault();
+      // Smooth transition: fade out game/end, fade in title
+      bodyEl.classList.remove('game-start', 'game-end');
+      endEl.classList.remove('fade-in');
+      titleScreenEl.classList.remove('fade-out');
+      titleScreenEl.classList.add('fade-in');
     }
   });
 
@@ -752,7 +1005,7 @@ textEl.addEventListener('touchstart', onTextTouch, { passive: false });
     } else {
       // elsewhere: start game
       titleScreenEl.classList.add('fade-out');
-      setTimeout(startGame2, 1000);
+      setTimeout(startGame2, 0); // Make transition instant
     }
   }, { passive: false });
   titleScreenEl.addEventListener('click', function(e) {
@@ -760,7 +1013,7 @@ textEl.addEventListener('touchstart', onTextTouch, { passive: false });
       cycleTheme2();
     } else {
       titleScreenEl.classList.add('fade-out');
-      setTimeout(startGame2, 1000);
+      setTimeout(startGame2, 0); // Make transition instant
     }
   });
 
@@ -786,6 +1039,116 @@ textEl.addEventListener('touchstart', onTextTouch, { passive: false });
   window.addEventListener('load', () => {
     titleScreenEl.classList.add('fade-in');
   });
+
+  // Theme definitions and functions
+const themes = {
+  dawn: {
+    bg: 'linear-gradient(135deg,#FFA17F 0%,#00223E 100%)',
+    ghost: '#FFE5B4',
+    correct: '#FFFFFF'
+  },
+  dusk: {
+    bg: 'linear-gradient(135deg,#2C3E50 0%,#FD746C 100%)',
+    ghost: '#D3D3D3',
+    correct: '#FFFFFF'
+  },
+  forest: {
+    bg: 'linear-gradient(135deg,#134E5E 0%,#71B280 100%)',
+    ghost: '#BFD8B8',
+    correct: '#F0FFF0'
+  },
+  ocean: {
+    bg: 'linear-gradient(135deg,#00C9FF 0%,#92FE9D 100%)',
+    ghost: '#D0F0FD',
+    correct: '#FFFFFF'
+  },
+  night: {
+    bg: 'linear-gradient(135deg,#0f2027 0%,#203a43 50%,#2c5364 100%)',
+    ghost: '#AAB8C2',
+    correct: '#FFFFFF'
+  },
+  sunset: {
+    bg: 'linear-gradient(135deg,#ff9a9e 0%,#fad0c4 100%)',
+    ghost: '#FFECE7',
+    correct: '#FFFFFF'
+  },
+  rainbow: {
+    bg: 'linear-gradient(135deg,#f6d365 0%,#fda085 20%,#fbc2eb 40%,#a6c1ee 60%,#84fab0 80%,#8fd3f4 100%)',
+    ghost: '#FFFFFF',
+    correct: '#000000'
+  },
+  autumn: {
+    bg: 'linear-gradient(135deg,#e96443 0%,#904e95 100%)',
+    ghost: '#F5D6C6',
+    correct: '#FFFFFF'
+  }
+};
+const keys = Object.keys(themes);
+let idxTheme = 0;
+const themeNameEl = document.getElementById('themeName');
+
+function applyTheme2(key) {
+  const t = themes[key];
+  document.documentElement.style.setProperty('--bg-gradient', t.bg);
+  document.documentElement.style.setProperty('--ghost-color', t.ghost);
+  document.documentElement.style.setProperty('--correct-color', t.correct);
+  themeNameEl.textContent = key;
+}
+// Ensure theme is applied on load
+applyTheme2(keys[idxTheme]);
+
+function cycleTheme2() {
+  document.getElementById('themeOverlay').style.opacity = '1';
+  setTimeout(() => {
+    idxTheme = (idxTheme + 1) % keys.length;
+    applyTheme2(keys[idxTheme]);
+    document.getElementById('themeOverlay').style.opacity = '0';
+  }, 500);
+}
+
+// Parallax particle layers
+const layers = [
+  { canvas: document.getElementById('particles-bg'), speed: 0.2, count: 50, size: [3,5], alpha: [0.05,0.2] },
+  { canvas: document.getElementById('particles-md'), speed: 0.5, count: 75, size: [2,4], alpha: [0.1,0.4] },
+  { canvas: document.getElementById('particles-fg'), speed: 1.0, count: 100, size: [1,3], alpha: [0.2,0.6] }
+];
+layers.forEach(layer => {
+  const c = layer.canvas;
+  const ctx = c.getContext('2d');
+  let parts = [];
+  function resize() {
+    c.width = innerWidth;
+    c.height = innerHeight;
+  }
+  function init() {
+    parts = [];
+    for (let i = 0; i < layer.count; i++) {
+      parts.push({
+        x: Math.random() * c.width,
+        y: Math.random() * c.height,
+        r: Math.random() * (layer.size[1] - layer.size[0]) + layer.size[0],
+        dy: Math.random() * layer.speed + 0.1,
+        alpha: Math.random() * (layer.alpha[1] - layer.alpha[0]) + layer.alpha[0]
+      });
+    }
+  }
+  function draw() {
+    ctx.clearRect(0, 0, c.width, c.height);
+    parts.forEach(p => {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, 2 * Math.PI);
+      ctx.fillStyle = `rgba(255,255,255,${p.alpha})`;
+      ctx.fill();
+      p.y -= p.dy;
+      if (p.y < -p.r) p.y = c.height + p.r;
+    });
+    requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize', () => { resize(); init(); });
+  resize();
+  init();
+  draw();
+});
 </script>
 </body>
 </html>
