@@ -688,10 +688,11 @@
   // Start game: fade out title, then add .game-start
 function startGame2() {
   // Play music on user interaction (start of game)
-  if (bgMusic.paused) {
+  try {
     bgMusic.currentTime = 0;
+    bgMusic.muted = false;
     bgMusic.play().catch(()=>{});
-  }
+  } catch (e) {}
   bodyEl.classList.add('game-start');
   if (isMobile()) {
     const mobileInput = document.getElementById('mobileInput');
@@ -968,12 +969,7 @@ textEl.addEventListener('touchstart', onTextTouch, { passive: false });
         bodyEl.classList.add('fading-title');
         setTimeout(() => {
           bodyEl.classList.remove('fading-title');
-          bodyEl.classList.add('game-start');
-          if (isMobile()) {
-            const mobileInput = document.getElementById('mobileInput');
-            if (mobileInput) mobileInput.focus();
-          }
-          initTest2();
+          startGame2(); // <-- Always use startGame2 to ensure music plays
         }, 0); // Make transition instant
       }
     }
