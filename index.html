@@ -697,12 +697,15 @@
   const endEl = document.getElementById('endScreen');
 
   // Start game: fade out title, then add .game-start
+let musicStarted = false;
 function startGame2() {
   // Play music on user interaction (start of game)
   try {
-    bgMusic.currentTime = 0;
-    bgMusic.muted = false;
-    bgMusic.play().catch(()=>{});
+    if (!musicStarted) {
+      bgMusic.muted = false;
+      bgMusic.play().catch(()=>{});
+      musicStarted = true;
+    }
   } catch (e) {}
   bodyEl.classList.add('game-start');
   if (isMobile()) {
