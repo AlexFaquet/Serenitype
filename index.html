@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <title>Serenitype – A Relaxing Typing Game to Boost Speed & Focus</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="Practice your typing skills in a calming, minimalist game. Serenitype is the zen alternative to MonkeyType and 10FastFingers. Track WPM, accuracy, and improve focus.">
 <meta name="keywords" content="typing game, WPM, speed typing, accuracy, monkeytype, 10fastfingers, relaxing typing, minimalist typing, improve typing, zen game, serenitype">
 <meta name="author" content="Serenitype">
@@ -69,9 +70,14 @@
       --bg-gradient: linear-gradient(135deg, #1e1e2f 0%, #2d2d44 100%);
       --ghost-color: #ccc;
       --correct-color: #fff;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-right: env(safe-area-inset-right, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-left: env(safe-area-inset-left, 0px);
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body { height: 100dvh; }
+    html, body { height: 100vh; height: 100dvh; }
+    html { background: var(--bg-gradient); }
     body {
       background: var(--bg-gradient);
       color: var(--ghost-color);
@@ -81,6 +87,7 @@
       height: 100dvh;
       touch-action: manipulation;
       transition: background 1s ease, color 1s ease;
+      -webkit-text-size-adjust: 100%;
     }
 
     /* Parallax layers */
@@ -135,7 +142,7 @@
 
     /* Settings button */
     #settingsBtn {
-      position: absolute; top: 1rem; right: 1rem;
+      position: absolute; top: calc(1rem + var(--safe-top)); right: calc(1rem + var(--safe-right));
       background: rgba(255,255,255,0.2);
       border: none; padding: 0.4rem; border-radius: 50%;
       font-size: 1.5rem; color: var(--ghost-color);
@@ -314,20 +321,6 @@
     }
     @keyframes blink {50%{border-color:transparent;}}
 
-/* Hide always by default */
-#mobileInputWrap {
-  display: none;
-}
-
-/* Show on mobile when game is running */
-@media (max-width: 700px) {
-  body.game-start #mobileInputWrap {
-    display: block;
-  }
-}
-
-
-
     /* End stats */
     #endScreen {
       position: fixed;
@@ -401,7 +394,8 @@
       #pressEnter, #endPrompt { font-size: 4vw; }
       #dynamicWrap { font-size: 8vw; }
       #resultWPM, #resultAcc { font-size: 7vw; }
-      #settingsBtn { font-size: 2.5rem; top: 0.5rem; right: 0.5rem; }
+      #settingsBtn { font-size: 2.5rem; top: calc(0.5rem + var(--safe-top)); right: calc(0.5rem + var(--safe-right)); }
+      #text { padding: 0 6vw calc(6rem + var(--safe-bottom)) 6vw; }
     }
 
     /* Tap-to-start prompt inside title */
@@ -445,6 +439,7 @@
       background: rgba(0,0,0,0.72); /* Darker, full screen shade */
       pointer-events: auto;
       text-align: center;
+      padding: calc(1rem + var(--safe-top)) calc(1rem + var(--safe-right)) calc(1rem + var(--safe-bottom)) calc(1rem + var(--safe-left));
       min-height: 0;
       transition: background 0.7s cubic-bezier(0.4,0,0.2,1);
     }
@@ -724,8 +719,7 @@ function startGame2() {
   } catch (e) {}
   bodyEl.classList.add('game-start');
   if (isMobile()) {
-    const mobileInput = document.getElementById('mobileInput');
-    if (mobileInput) mobileInput.focus();
+    focusMobileInput();
   }
   initTest2();
 }
@@ -845,10 +839,14 @@ window.addEventListener('DOMContentLoaded', () => {
     wrap.id = 'mobileInputWrap';
     // style via CSS class or inline:
     wrap.style.cssText = `
-      position: fixed; bottom: 0; left: 0; right: 0;
-      width: 100vw; max-width: 100vw; z-index: 20;
-      background: rgba(0,0,0,0.7); /* match overlay, avoid inverted colors */
-      box-shadow: 0 -2px 16px rgba(0,0,0,0.2);
+      position: fixed; bottom: 0; left: 0;
+      width: 1px; height: 1px; z-index: 20;
+      overflow: hidden;
+      background: transparent;
+      box-shadow: none;
+      padding: 0; margin: 0;
+      pointer-events: none;
+      opacity: 0;
       display: none;
     `;
     const inp = document.createElement('input');
@@ -860,10 +858,12 @@ window.addEventListener('DOMContentLoaded', () => {
     inp.spellcheck = false;
     inp.placeholder = 'Type here...';
     inp.style.cssText = `
-      width: 100%; padding: 0.8rem; font-size: 1.2rem;
-      border-radius: 1.5rem; border: none; outline: none;
-      background: rgba(255,255,255,0.1); color: var(--correct-color);
-      backdrop-filter: blur(2px);
+      width: 1px; height: 1px; padding: 0; margin: 0;
+      border-radius: 0; border: 0; outline: none;
+      background: transparent; color: transparent;
+      opacity: 0; box-shadow: none;
+      font-size: 16px; line-height: 1;
+      box-sizing: border-box;
     `;
     wrap.appendChild(inp);
     document.body.appendChild(wrap);
@@ -897,22 +897,13 @@ window.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // --- Fix: Scroll paragraph into view on input focus ---
-    inp.addEventListener('focus', () => {
-      setTimeout(() => {
-        const dyn = document.getElementById('dynamicWrap');
-        if (dyn) dyn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        window.scrollTo(0, 0); // extra: keep top visible
-      }, 200);
-    });
-
     // Focus when starting game:
     const originalStart = startGame2;
     startGame2 = function() {
       originalStart();
       setTimeout(() => {
-        inp.focus();
-      }, 100);
+        focusMobileInput();
+      }, 50);
     };
   }
 });
@@ -955,8 +946,7 @@ function onTextTouch(e) {
   if (!bodyEl.classList.contains('game-start')) return;
   e.preventDefault();
   if (isMobile()) {
-    const mobileInput = document.getElementById('mobileInput');
-    if (mobileInput) mobileInput.focus();
+    focusMobileInput();
     // lock caret to front...
     const spans = document.querySelectorAll('#dynamicWrap span');
     if (!spans.length) return;
@@ -977,7 +967,22 @@ textEl.addEventListener('touchstart', onTextTouch, { passive: false });
 
   // Utility: detect mobile
   function isMobile() {
+    if (window.matchMedia) {
+      const isNarrow = window.matchMedia('(max-width: 700px)').matches;
+      const isCoarse = window.matchMedia('(pointer: coarse)').matches;
+      const noHover = window.matchMedia('(hover: none)').matches;
+      if (isNarrow || (isCoarse && noHover)) return true;
+    }
     return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|Mobile/i.test(navigator.userAgent);
+  }
+  function focusMobileInput() {
+    const mobileInput = document.getElementById('mobileInput');
+    if (!mobileInput) return;
+    try {
+      mobileInput.focus({ preventScroll: true });
+    } catch (e) {
+      mobileInput.focus();
+    }
   }
   // References for title/end elements
   const titleScreenEl = document.getElementById('titleScreen');
@@ -1132,10 +1137,12 @@ function cycleTheme2() {
 }
 
 // Parallax particle layers
+const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const particleMultiplier = (isMobile() || prefersReducedMotion) ? 0.6 : 1;
 const layers = [
-  { canvas: document.getElementById('particles-bg'), speed: 0.2, count: 50, size: [3,5], alpha: [0.05,0.2] },
-  { canvas: document.getElementById('particles-md'), speed: 0.5, count: 75, size: [2,4], alpha: [0.1,0.4] },
-  { canvas: document.getElementById('particles-fg'), speed: 1.0, count: 100, size: [1,3], alpha: [0.2,0.6] }
+  { canvas: document.getElementById('particles-bg'), speed: 0.2, count: Math.max(20, Math.round(50 * particleMultiplier)), size: [3,5], alpha: [0.05,0.2] },
+  { canvas: document.getElementById('particles-md'), speed: 0.5, count: Math.max(30, Math.round(75 * particleMultiplier)), size: [2,4], alpha: [0.1,0.4] },
+  { canvas: document.getElementById('particles-fg'), speed: 1.0, count: Math.max(40, Math.round(100 * particleMultiplier)), size: [1,3], alpha: [0.2,0.6] }
 ];
 layers.forEach(layer => {
   const c = layer.canvas;
