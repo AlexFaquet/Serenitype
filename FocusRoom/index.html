@@ -1,0 +1,1824 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Focus Room v1</title>
+  <style>
+    :root {
+      --bg: #0a0c10;
+      --bg-soft: #131820;
+      --bg-deep: #07080b;
+      --text: #e3e7e4;
+      --text-dim: #9aa3a1;
+      --accent: #7bd0c7;
+      --ease-slow: cubic-bezier(0.2, 0, 0, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: "Satoshi", "General Sans", "Avenir Next", "Gill Sans", "Trebuchet MS", sans-serif;
+      letter-spacing: 0.01em;
+      overflow: hidden;
+      opacity: 0;
+      transition: background-color 4s var(--ease-slow), opacity 1.6s var(--ease-slow);
+    }
+    body.is-ready {
+      opacity: 1;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: -20%;
+      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='120' height='120' filter='url(%23n)' opacity='0.12'/></svg>");
+      opacity: 0.06;
+      mix-blend-mode: soft-light;
+      pointer-events: none;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      inset: -20%;
+      background: radial-gradient(120% 140% at 50% -20%, rgba(255, 255, 255, 0.08), rgba(0, 0, 0, 0.2) 55%, rgba(0, 0, 0, 0.7) 100%);
+      opacity: 0.6;
+      transition: opacity 4s var(--ease-slow);
+      pointer-events: none;
+    }
+
+    body.state-end {
+      background-color: #10141b;
+    }
+
+    body.state-end::after {
+      opacity: 0.35;
+    }
+
+    .app {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    .history-link {
+      position: absolute;
+      top: 4vh;
+      right: 5vw;
+      z-index: 4;
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      cursor: pointer;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 1.6s var(--ease-slow), color 1.6s var(--ease-slow);
+    }
+
+    body.state-entry .history-link {
+      opacity: 0.6;
+      pointer-events: auto;
+    }
+
+    .history-link:hover {
+      opacity: 0.9;
+      color: var(--text);
+    }
+
+    .history-link:focus-visible {
+      outline: 2px solid rgba(123, 208, 199, 0.6);
+      outline-offset: 4px;
+    }
+
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 1.8s var(--ease-slow), transform 1.8s var(--ease-slow);
+    }
+
+    .entry {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .entry input {
+      width: min(70vw, 520px);
+      font-size: clamp(20px, 2.2vw, 28px);
+      padding: 18px 10px;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid rgba(227, 231, 228, 0.18);
+      color: var(--text);
+      outline: none;
+      text-align: center;
+      transition: border-color 1.6s var(--ease-slow), color 1.6s var(--ease-slow);
+    }
+
+    .entry input::placeholder {
+      color: rgba(227, 231, 228, 0.4);
+    }
+
+    body.state-setup .entry,
+    body.state-focus .entry,
+    body.state-end .entry,
+    body.state-history .entry {
+      opacity: 0;
+      transform: translateY(-12px);
+      pointer-events: none;
+    }
+
+    .history {
+      opacity: 0;
+      pointer-events: none;
+      flex-direction: column;
+      transform: translateY(12px);
+    }
+
+    body.state-history .history {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    body.state-history .setup,
+    body.state-history .session,
+    body.state-history .end {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .history-panel {
+      width: min(82vw, 720px);
+      display: flex;
+      flex-direction: column;
+      gap: 26px;
+      align-items: stretch;
+    }
+
+    .history-title {
+      font-size: 12px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      text-align: center;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      min-height: 180px;
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity 1.2s var(--ease-slow), transform 1.2s var(--ease-slow);
+    }
+
+    .history-list.is-fading {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+
+    .history-item {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 6px 0;
+    }
+
+    .history-day {
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(227, 231, 228, 0.45);
+    }
+
+    .history-intention {
+      font-size: 16px;
+      color: var(--text);
+    }
+
+    .history-meta {
+      font-size: 11px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    .history-empty {
+      font-size: 13px;
+      color: var(--text-dim);
+      text-align: center;
+      padding: 24px 0;
+    }
+
+    .history-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .history-actions button {
+      background: transparent;
+      border: 1px solid rgba(227, 231, 228, 0.16);
+      color: var(--text-dim);
+      padding: 10px 22px;
+      border-radius: 999px;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: border-color 1.6s var(--ease-slow), color 1.6s var(--ease-slow), transform 1.6s var(--ease-slow), background-color 1.6s var(--ease-slow), opacity 0.6s var(--ease-slow);
+    }
+
+    .history-actions button:hover {
+      border-color: rgba(227, 231, 228, 0.3);
+      color: var(--text);
+      transform: translateY(-1px);
+    }
+
+    .history-actions button.is-confirm {
+      border-color: rgba(123, 208, 199, 0.45);
+      color: var(--text);
+      background-color: rgba(123, 208, 199, 0.08);
+    }
+
+    .history-actions button.is-switching {
+      opacity: 0;
+    }
+
+    .setup {
+      opacity: 0;
+      pointer-events: none;
+      flex-direction: column;
+      gap: 26px;
+      transform: translateY(12px);
+    }
+
+    body.state-setup .setup {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    body.is-transitioning .setup {
+      opacity: 0;
+      transform: translateY(-14px);
+      pointer-events: none;
+    }
+
+    body.state-focus .setup,
+    body.state-end .setup {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .setup-intent {
+      font-size: 11px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      opacity: 0.8;
+    }
+
+    .setup-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      align-items: center;
+    }
+
+    .setup-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .setup-label {
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(227, 231, 228, 0.5);
+    }
+
+    .segment {
+      display: flex;
+      gap: 6px;
+      padding: 6px;
+      border-radius: 999px;
+      border: 1px solid rgba(227, 231, 228, 0.12);
+      background: rgba(12, 15, 20, 0.7);
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .segment-option {
+      position: relative;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+    }
+
+    .segment-option input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .segment-option span {
+      display: block;
+      padding: 8px 16px;
+      border-radius: 999px;
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(227, 231, 228, 0.55);
+      transition: color 1.4s var(--ease-slow), background-color 1.4s var(--ease-slow), box-shadow 1.4s var(--ease-slow);
+    }
+
+    .segment-option input:checked + span {
+      color: var(--text);
+      background: rgba(123, 208, 199, 0.14);
+      box-shadow: 0 0 0 1px rgba(123, 208, 199, 0.35) inset;
+    }
+
+    .segment-option:focus-within span {
+      box-shadow: 0 0 0 2px rgba(123, 208, 199, 0.45);
+    }
+
+    [data-dev] {
+      display: none;
+    }
+
+    body.is-dev [data-dev] {
+      display: inline-flex;
+    }
+
+    .setup-actions {
+      margin-top: 6px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .start-session {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(227, 231, 228, 0.2);
+      background: rgba(12, 15, 20, 0.6);
+      color: var(--text);
+      padding: 12px 28px;
+      border-radius: 999px;
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: border-color 1.6s var(--ease-slow), background-color 1.6s var(--ease-slow), transform 1.6s var(--ease-slow), color 1.6s var(--ease-slow);
+    }
+
+    .start-session:hover {
+      border-color: rgba(227, 231, 228, 0.35);
+      background: rgba(123, 208, 199, 0.12);
+      color: #f2f5f3;
+      transform: translateY(-1px);
+    }
+
+    .start-session:focus-visible {
+      outline: 2px solid rgba(123, 208, 199, 0.6);
+      outline-offset: 4px;
+    }
+
+    .start-session .ripple {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(123, 208, 199, 0.35);
+      transform: translate(-50%, -50%) scale(0);
+      animation: ripple 1.4s var(--ease-slow);
+      pointer-events: none;
+    }
+
+    @keyframes ripple {
+      to {
+        transform: translate(-50%, -50%) scale(2.8);
+        opacity: 0;
+      }
+    }
+
+    .session {
+      opacity: 0;
+      pointer-events: none;
+      flex-direction: column;
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body.state-focus .session,
+    body.state-end .session {
+      opacity: 1;
+      pointer-events: none;
+    }
+
+    body.is-touch.state-focus .session {
+      pointer-events: auto;
+    }
+
+    .task {
+      position: absolute;
+      top: 8vh;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 12px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      opacity: 0.75;
+    }
+
+    .line-wrap {
+      width: min(84vw, 1200px);
+      height: 140px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      transition: opacity 1.6s var(--ease-slow);
+    }
+
+    #lineSvg {
+      width: 100%;
+      height: 100%;
+    }
+
+    #linePath {
+      stroke: var(--accent);
+      stroke-width: 1.2;
+      fill: none;
+      stroke-linecap: round;
+      opacity: 0;
+      filter: drop-shadow(0 0 10px rgba(123, 208, 199, 0.12));
+    }
+
+    .bubble-wrap {
+      width: min(55vw, 420px);
+      height: min(55vh, 420px);
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0;
+      transition: opacity 1.6s var(--ease-slow);
+      pointer-events: none;
+    }
+
+    #bubbleCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    body.experience-bubble .line-wrap {
+      opacity: 0;
+    }
+
+    body.experience-bubble .bubble-wrap {
+      opacity: 1;
+    }
+
+    .pause-indicator {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      opacity: 0;
+      transition: opacity 1.6s var(--ease-slow);
+      pointer-events: none;
+    }
+
+    body.is-paused .pause-indicator {
+      opacity: 0.6;
+    }
+
+    .hold-overlay {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.8s var(--ease-slow), transform 0.8s var(--ease-slow);
+    }
+
+    body.is-holding .hold-overlay {
+      opacity: 1;
+      transform: translate(-50%, -50%);
+    }
+
+    .hold-ring {
+      width: 56px;
+      height: 56px;
+    }
+
+    .hold-ring svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .hold-ring-track {
+      stroke: rgba(227, 231, 228, 0.12);
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .hold-ring-progress {
+      stroke: rgba(123, 208, 199, 0.6);
+      stroke-width: 2;
+      fill: none;
+      stroke-linecap: round;
+      transform: rotate(-90deg);
+      transform-origin: 50% 50%;
+    }
+
+    .hold-text {
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    .toast {
+      position: absolute;
+      left: 50%;
+      bottom: 7vh;
+      transform: translateX(-50%);
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      opacity: 0;
+      transition: opacity 1.2s var(--ease-slow);
+      pointer-events: none;
+    }
+
+    .toast.is-visible {
+      opacity: 0.7;
+    }
+
+    .end-session {
+      position: absolute;
+      left: 50%;
+      bottom: 6vh;
+      transform: translateX(-50%);
+      background: transparent;
+      border: 1px solid rgba(227, 231, 228, 0.2);
+      color: var(--text-dim);
+      padding: 10px 22px;
+      border-radius: 999px;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      cursor: pointer;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 1.2s var(--ease-slow), border-color 1.6s var(--ease-slow), color 1.6s var(--ease-slow);
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body.is-touch.state-focus .end-session {
+      opacity: 0.65;
+      pointer-events: auto;
+    }
+
+    .end {
+      opacity: 0;
+      pointer-events: none;
+      flex-direction: column;
+      gap: 22px;
+      text-align: center;
+    }
+
+    body.state-end .end {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .prompt {
+      font-size: clamp(18px, 2vw, 24px);
+      color: var(--text);
+      letter-spacing: 0.02em;
+    }
+
+    .options {
+      display: flex;
+      gap: 14px;
+    }
+
+    .options button {
+      background: transparent;
+      border: 1px solid rgba(227, 231, 228, 0.16);
+      color: var(--text);
+      padding: 10px 20px;
+      border-radius: 999px;
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: border-color 1.6s var(--ease-slow), background-color 1.6s var(--ease-slow), color 1.6s var(--ease-slow), transform 1.6s var(--ease-slow);
+    }
+
+    .options button:hover {
+      border-color: rgba(227, 231, 228, 0.32);
+      background-color: rgba(227, 231, 228, 0.06);
+      transform: translateY(-1px);
+    }
+
+    .options button:focus-visible {
+      outline: 2px solid rgba(123, 208, 199, 0.6);
+      outline-offset: 4px;
+    }
+
+    @media (max-width: 640px) {
+      .task {
+        letter-spacing: 0.12em;
+      }
+
+      .line-wrap {
+        width: 90vw;
+        height: 110px;
+      }
+
+      .bubble-wrap {
+        width: min(70vw, 320px);
+        height: min(60vh, 320px);
+      }
+
+      .history-actions {
+        flex-direction: column;
+      }
+
+      .options {
+        flex-direction: column;
+      }
+
+      .options button {
+        width: 160px;
+      }
+    }
+  </style>
+</head>
+<body class="state-entry experience-string">
+  <div class="app">
+    <button class="history-link" id="historyButton" type="button">History</button>
+
+    <div class="screen entry">
+      <input id="taskInput" type="text" placeholder="What are you working on?" autocomplete="off" spellcheck="false" aria-label="Focus intention" />
+    </div>
+
+    <div class="screen history" id="historyScreen" aria-hidden="true">
+      <div class="history-panel">
+        <div class="history-title">Session history</div>
+        <div class="history-list" id="historyList"></div>
+        <div class="history-actions">
+          <button type="button" id="historyClose">Close</button>
+          <button type="button" id="historyClear">Clear history</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen setup" id="setupScreen">
+      <div class="setup-intent" id="setupIntent"></div>
+      <div class="setup-panel">
+        <div class="setup-group">
+          <div class="setup-label">Session length</div>
+          <div class="segment" role="group" aria-label="Session length">
+            <label class="segment-option">
+              <input type="radio" name="length" value="short" data-min="1200000" data-max="1500000" />
+              <span>Short</span>
+            </label>
+            <label class="segment-option">
+              <input type="radio" name="length" value="standard" data-min="1800000" data-max="2100000" checked />
+              <span>Standard</span>
+            </label>
+            <label class="segment-option">
+              <input type="radio" name="length" value="long" data-min="2700000" data-max="3600000" />
+              <span>Long</span>
+            </label>
+            <label class="segment-option" data-dev>
+              <input type="radio" name="length" value="test" data-min="10000" data-max="10000" />
+              <span>Test</span>
+            </label>
+          </div>
+        </div>
+        <div class="setup-group">
+          <div class="setup-label">Environment</div>
+          <div class="segment" role="group" aria-label="Environment">
+            <label class="segment-option">
+              <input type="radio" name="environment" value="string" checked />
+              <span>String</span>
+            </label>
+            <label class="segment-option">
+              <input type="radio" name="environment" value="wave" />
+              <span>Wave</span>
+            </label>
+            <label class="segment-option">
+              <input type="radio" name="environment" value="stillness" />
+              <span>Stillness</span>
+            </label>
+            <label class="segment-option">
+              <input type="radio" name="environment" value="bubble" />
+              <span>Bubble</span>
+            </label>
+          </div>
+        </div>
+        <div class="setup-group">
+          <div class="setup-label">Sound</div>
+          <div class="segment" role="group" aria-label="Sound">
+            <label class="segment-option">
+              <input type="radio" name="sound" value="silence" checked />
+              <span>Silence</span>
+            </label>
+            <label class="segment-option">
+              <input type="radio" name="sound" value="ambient" />
+              <span>Ambient</span>
+            </label>
+          </div>
+        </div>
+        <div class="setup-actions">
+          <button class="start-session" id="startSession" type="button">Begin focus</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen session">
+      <div class="task" id="taskLabel"></div>
+      <div class="line-wrap" aria-hidden="true">
+        <svg id="lineSvg" viewBox="0 0 1000 140" preserveAspectRatio="none">
+          <path id="linePath" d="M 0 70 C 340 78, 660 74, 1000 70"></path>
+        </svg>
+      </div>
+      <div class="bubble-wrap" aria-hidden="true">
+        <canvas id="bubbleCanvas"></canvas>
+      </div>
+      <div class="pause-indicator" id="pauseIndicator">Paused</div>
+      <div class="hold-overlay" id="holdOverlay" aria-hidden="true">
+        <div class="hold-ring" aria-hidden="true">
+          <svg viewBox="0 0 56 56">
+            <circle class="hold-ring-track" cx="28" cy="28" r="22"></circle>
+            <circle class="hold-ring-progress" id="holdRing" cx="28" cy="28" r="22"></circle>
+          </svg>
+        </div>
+        <div class="hold-text">Hold to end...</div>
+      </div>
+      <div class="toast" id="toast"></div>
+      <button class="end-session" id="endSessionHold" type="button">Hold to end</button>
+    </div>
+
+    <div class="screen end">
+      <div class="prompt">Did this feel focused?</div>
+      <div class="options">
+        <button type="button" data-answer="yes">Yes</button>
+        <button type="button" data-answer="neutral">Neutral</button>
+        <button type="button" data-answer="distracted">Distracted</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      const DEFAULT_DURATION_MS = 1800000;
+      const END_DURATION_MS = 4200;
+      const HOLD_DURATION_MS = 4000;
+      const HISTORY_KEY = "focusRoomHistory";
+      const HISTORY_LIMIT = 30;
+      const VIEW_WIDTH = 1000;
+      const VIEW_HEIGHT = 140;
+      const MID_Y = VIEW_HEIGHT / 2;
+
+      // String environment: many points, traveling wave, soft micro-detail.
+      const STRING_AMPLITUDE = 16;
+      const STRING_SEGMENTS = 90;
+      const STRING_CYCLES = 1.8;
+      const STRING_DETAIL = 3.6;
+      const STRING_SPEED_MAX = 0.0014;
+      const STRING_SPEED_MIN = 0.00012;
+
+      // Wave environment: broader tide with fewer cycles and slower drift.
+      const WAVE_AMPLITUDE = 26;
+      const WAVE_SEGMENTS = 70;
+      const WAVE_CYCLES = 0.7;
+      const WAVE_SPEED_MAX = 0.0005;
+      const WAVE_SPEED_MIN = 0.00005;
+      const WAVE_DRIFT = 0.55;
+
+      // Stillness environment: nearly straight and still.
+      const STILLNESS_AMPLITUDE = 1.2;
+      const STILLNESS_SEGMENTS = 40;
+
+      const ENV_LABELS = {
+        string: "String",
+        wave: "Wave",
+        stillness: "Stillness",
+        bubble: "Bubble"
+      };
+
+      const body = document.body;
+      const input = document.getElementById("taskInput");
+      const setupScreen = document.getElementById("setupScreen");
+      const setupIntent = document.getElementById("setupIntent");
+      const label = document.getElementById("taskLabel");
+      const path = document.getElementById("linePath");
+      const bubbleCanvas = document.getElementById("bubbleCanvas");
+      const sessionScreen = document.querySelector(".screen.session");
+      const optionButtons = Array.from(document.querySelectorAll("[data-answer]"));
+      const lengthInputs = Array.from(document.querySelectorAll("input[name='length']"));
+      const environmentInputs = Array.from(document.querySelectorAll("input[name='environment']"));
+      const soundInputs = Array.from(document.querySelectorAll("input[name='sound']"));
+      const startButton = document.getElementById("startSession");
+      const historyButton = document.getElementById("historyButton");
+      const historyScreen = document.getElementById("historyScreen");
+      const historyList = document.getElementById("historyList");
+      const historyClose = document.getElementById("historyClose");
+      const historyClear = document.getElementById("historyClear");
+      const pauseIndicator = document.getElementById("pauseIndicator");
+      const holdOverlay = document.getElementById("holdOverlay");
+      const holdRing = document.getElementById("holdRing");
+      const toast = document.getElementById("toast");
+      const endSessionHold = document.getElementById("endSessionHold");
+
+      const devElements = Array.from(document.querySelectorAll("[data-dev]"));
+      const isDev = new URLSearchParams(window.location.search).get("dev") === "1";
+
+      let state = "entry";
+      let intention = "";
+      let elapsed = 0;
+      let phase = 0;
+      let lastTime = 0;
+      let rafId = null;
+      let isPaused = false;
+      let isEnding = false;
+      let endStart = 0;
+      let sessionDuration = DEFAULT_DURATION_MS;
+      let sessionLengthLabel = "Standard";
+      let environment = "string";
+      let soundMode = "silence";
+      let sessionMeta = { intention: "", environment: "", lengthLabel: "" };
+      let clearPending = false;
+      let toastTimer = null;
+      let holdTimer = null;
+      let holdRaf = null;
+      let holdStart = 0;
+      let isTouch = false;
+
+      let audioContext = null;
+      let audioOscillator = null;
+      let audioFilter = null;
+      let audioGain = null;
+
+      const bubble = {
+        ctx: bubbleCanvas.getContext("2d"),
+        width: 0,
+        height: 0,
+        dpr: window.devicePixelRatio || 1
+      };
+
+      const holdCircumference = 2 * Math.PI * Number(holdRing.getAttribute("r"));
+      holdRing.style.strokeDasharray = holdCircumference;
+      holdRing.style.strokeDashoffset = holdCircumference;
+
+      const clamp = (value) => Math.min(Math.max(value, 0), 1);
+      const lerp = (a, b, t) => a + (b - a) * t;
+      const easeInOutSine = (t) => -(Math.cos(Math.PI * t) - 1) / 2;
+      const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+
+      const setState = (next) => {
+        body.classList.remove("state-entry", "state-setup", "state-focus", "state-end", "state-history");
+        body.classList.add(`state-${next}`);
+        state = next;
+        historyScreen.setAttribute("aria-hidden", next !== "history");
+      };
+
+      const setEnvironmentClass = (value) => {
+        body.classList.remove("experience-string", "experience-wave", "experience-stillness", "experience-bubble");
+        body.classList.add(`experience-${value}`);
+      };
+
+      const applyDevMode = () => {
+        body.classList.toggle("is-dev", isDev);
+        devElements.forEach((element) => {
+          const input = element.querySelector("input");
+          if (isDev) {
+            element.style.display = "";
+            if (input) {
+              input.disabled = false;
+            }
+          } else {
+            element.style.display = "none";
+            if (input) {
+              input.disabled = true;
+              input.checked = false;
+            }
+          }
+        });
+
+        if (!isDev) {
+          const defaultLength = lengthInputs.find((item) => item.value === "standard") || lengthInputs.find((item) => !item.disabled);
+          if (defaultLength) {
+            defaultLength.checked = true;
+          }
+          const defaultEnv = environmentInputs.find((item) => item.value === "string") || environmentInputs.find((item) => !item.disabled);
+          if (defaultEnv) {
+            defaultEnv.checked = true;
+          }
+          const defaultSound = soundInputs.find((item) => item.value === "silence") || soundInputs.find((item) => !item.disabled);
+          if (defaultSound) {
+            defaultSound.checked = true;
+          }
+        }
+      };
+
+      const getCheckedInput = (inputs) => inputs.find((input) => input.checked && !input.disabled) || inputs.find((input) => !input.disabled);
+
+      const buildPath = ({
+        segments,
+        amplitude,
+        cycles,
+        detail,
+        phase,
+        arcWeight,
+        waveWeight,
+        microWeight,
+        offset
+      }) => {
+        const pts = [];
+        for (let i = 0; i <= segments; i += 1) {
+          const t = i / segments;
+          const x = t * VIEW_WIDTH;
+
+          const arc = Math.sin(Math.PI * t) * arcWeight;
+          const wave = cycles > 0 ? Math.sin(t * Math.PI * 2 * cycles + phase) * waveWeight : 0;
+          const micro = detail > 0 ? Math.sin(t * Math.PI * 2 * detail - phase * 0.7) * microWeight : 0;
+
+          const y = MID_Y + offset + amplitude * (arc + wave + micro);
+          pts.push({ x, y });
+        }
+
+        // Smooth path using quadratic midpoints
+        let d = `M ${pts[0].x.toFixed(2)} ${pts[0].y.toFixed(2)}`;
+        for (let i = 1; i < pts.length - 1; i++) {
+          const cx = pts[i].x;
+          const cy = pts[i].y;
+          const mx = (pts[i].x + pts[i + 1].x) / 2;
+          const my = (pts[i].y + pts[i + 1].y) / 2;
+          d += ` Q ${cx.toFixed(2)} ${cy.toFixed(2)} ${mx.toFixed(2)} ${my.toFixed(2)}`;
+        }
+        const last = pts[pts.length - 1];
+        d += ` T ${last.x.toFixed(2)} ${last.y.toFixed(2)}`;
+
+        path.setAttribute("d", d);
+      };
+
+
+      const readSetup = () => {
+        const lengthSelected = getCheckedInput(lengthInputs);
+        if (lengthSelected && !lengthSelected.checked) {
+          lengthSelected.checked = true;
+        }
+        const minDuration = Number(lengthSelected?.dataset.min) || DEFAULT_DURATION_MS;
+        const maxDuration = Number(lengthSelected?.dataset.max) || minDuration;
+        const range = Math.max(maxDuration - minDuration, 0);
+        sessionDuration = minDuration + Math.random() * range;
+        sessionLengthLabel = lengthSelected?.nextElementSibling?.textContent?.trim() || sessionLengthLabel;
+
+        const envSelected = getCheckedInput(environmentInputs);
+        if (envSelected && !envSelected.checked) {
+          envSelected.checked = true;
+        }
+        environment = envSelected?.value || "string";
+        setEnvironmentClass(environment);
+
+        const soundSelected = getCheckedInput(soundInputs);
+        if (soundSelected && !soundSelected.checked) {
+          soundSelected.checked = true;
+        }
+        soundMode = soundSelected?.value || "silence";
+      };
+
+      const showSetup = () => {
+        intention = input.value.trim() || "Focus";
+        setupIntent.textContent = intention;
+        readSetup();
+        setState("setup");
+        const firstInput = lengthInputs.find((option) => option.checked) || lengthInputs[0];
+        if (firstInput) {
+          firstInput.focus();
+        }
+      };
+
+      const getDayLabel = (isoString) => {
+        const date = new Date(isoString);
+        if (Number.isNaN(date.getTime())) {
+          return "";
+        }
+        const now = new Date();
+        const startNow = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const startDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        const diffDays = Math.round((startNow - startDate) / 86400000);
+        if (diffDays === 0) {
+          return "Today";
+        }
+        if (diffDays === 1) {
+          return "Yesterday";
+        }
+        const weekdays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        return weekdays[date.getDay()];
+      };
+
+      const loadHistory = () => {
+        try {
+          const raw = localStorage.getItem(HISTORY_KEY);
+          const parsed = raw ? JSON.parse(raw) : [];
+          return Array.isArray(parsed) ? parsed : [];
+        } catch (error) {
+          return [];
+        }
+      };
+
+      const saveHistory = (outcome) => {
+        if (!sessionMeta.intention) {
+          return;
+        }
+        const record = {
+          id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+          endedAtISO: new Date().toISOString(),
+          intention: sessionMeta.intention,
+          environment: sessionMeta.environment,
+          lengthLabel: sessionMeta.lengthLabel,
+          outcome
+        };
+        const history = loadHistory();
+        history.unshift(record);
+        history.splice(HISTORY_LIMIT);
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+      };
+
+      const applyHistoryItem = (item) => {
+        if (!item) {
+          return;
+        }
+        const nextIntention = item.intention || "";
+        intention = nextIntention;
+        input.value = nextIntention;
+        setupIntent.textContent = nextIntention;
+
+        const lengthLabel = (item.lengthLabel || "").toLowerCase();
+        if (lengthLabel) {
+          const match = lengthInputs.find((input) => {
+            const label = input.nextElementSibling ? input.nextElementSibling.textContent.trim().toLowerCase() : "";
+            return label === lengthLabel;
+          });
+          if (match) {
+            lengthInputs.forEach((input) => {
+              input.checked = input === match;
+            });
+          }
+        }
+
+        const envLabel = (item.environment || "").toLowerCase();
+        if (envLabel) {
+          const envKey = Object.keys(ENV_LABELS).find((key) => ENV_LABELS[key].toLowerCase() === envLabel);
+          if (envKey) {
+            const envInput = environmentInputs.find((input) => input.value === envKey);
+            if (envInput) {
+              environmentInputs.forEach((input) => {
+                input.checked = input === envInput;
+              });
+            }
+          }
+        }
+
+        closeHistory();
+        showSetup();
+      };
+
+      const renderHistory = () => {
+        const history = loadHistory();
+        historyList.innerHTML = "";
+        if (history.length === 0) {
+          const empty = document.createElement("div");
+          empty.className = "history-empty";
+          empty.textContent = "No sessions yet.";
+          historyList.appendChild(empty);
+          return;
+        }
+
+        history.forEach((item) => {
+          const row = document.createElement("div");
+          row.className = "history-item";
+          row.tabIndex = 0;
+          row.style.cursor = "pointer";
+          row.addEventListener("click", () => {
+            applyHistoryItem(item);
+          });
+          row.addEventListener("keydown", (event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              applyHistoryItem(item);
+            }
+          });
+
+          const day = document.createElement("div");
+          day.className = "history-day";
+          day.textContent = getDayLabel(item.endedAtISO);
+
+          const intent = document.createElement("div");
+          intent.className = "history-intention";
+          intent.textContent = item.intention;
+
+          const meta = document.createElement("div");
+          meta.className = "history-meta";
+          meta.textContent = `${item.environment} / ${item.lengthLabel} / ${item.outcome}`;
+
+          row.append(day, intent, meta);
+          historyList.appendChild(row);
+        });
+      };
+
+      const resetHistoryClear = () => {
+        clearPending = false;
+        historyClear.textContent = "Clear history";
+        historyClear.classList.remove("is-confirm");
+        historyClear.classList.remove("is-switching");
+      };
+
+      const switchHistoryClearLabel = (label, confirm) => {
+        historyClear.classList.add("is-switching");
+        window.setTimeout(() => {
+          historyClear.textContent = label;
+          historyClear.classList.toggle("is-confirm", confirm);
+          historyClear.classList.remove("is-switching");
+        }, 260);
+      };
+
+      const openHistory = () => {
+        renderHistory();
+        resetHistoryClear();
+        setState("history");
+      };
+
+      const closeHistory = () => {
+        resetHistoryClear();
+        setState("entry");
+        input.focus();
+      };
+
+      const ensureAudioContext = () => {
+        if (!audioContext) {
+          audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioContext.state === "suspended") {
+          audioContext.resume();
+        }
+        return audioContext;
+      };
+
+      const closeAudioContext = () => {
+        if (audioContext) {
+          audioContext.close();
+        }
+        audioContext = null;
+        audioOscillator = null;
+        audioFilter = null;
+        audioGain = null;
+      };
+
+      const startAmbient = () => {
+        if (soundMode !== "ambient" || audioOscillator) {
+          return;
+        }
+        const context = ensureAudioContext();
+        const oscillator = context.createOscillator();
+        const filter = context.createBiquadFilter();
+        const gain = context.createGain();
+
+        oscillator.type = "sine";
+        oscillator.frequency.value = 164;
+        filter.type = "lowpass";
+        filter.frequency.value = 320;
+        gain.gain.value = 0.0012;
+
+        oscillator.connect(filter);
+        filter.connect(gain);
+        gain.connect(context.destination);
+        oscillator.start();
+
+        audioContext = context;
+        audioOscillator = oscillator;
+        audioFilter = filter;
+        audioGain = gain;
+      };
+
+      const stopAmbient = () => {
+        if (audioOscillator) {
+          audioOscillator.stop();
+          audioOscillator.disconnect();
+        }
+        if (audioFilter) {
+          audioFilter.disconnect();
+        }
+        if (audioGain) {
+          audioGain.disconnect();
+        }
+        audioOscillator = null;
+        audioFilter = null;
+        audioGain = null;
+      };
+
+      const playChime = () => {
+        const context = ensureAudioContext();
+        const now = context.currentTime;
+        const gain = context.createGain();
+        const filter = context.createBiquadFilter();
+        const oscA = context.createOscillator();
+        const oscB = context.createOscillator();
+
+        oscA.type = "sine";
+        oscB.type = "sine";
+        oscA.frequency.setValueAtTime(520, now);
+        oscB.frequency.setValueAtTime(660, now + 0.02);
+
+        filter.type = "lowpass";
+        filter.frequency.setValueAtTime(1200, now);
+
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.exponentialRampToValueAtTime(0.012, now + 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 1.1);
+
+        oscA.connect(filter);
+        oscB.connect(filter);
+        filter.connect(gain);
+        gain.connect(context.destination);
+
+        oscA.start(now);
+        oscB.start(now + 0.02);
+        oscA.stop(now + 1.2);
+        oscB.stop(now + 1.2);
+
+        window.setTimeout(() => {
+          if (!audioOscillator) {
+            closeAudioContext();
+          }
+        }, 1400);
+      };
+
+      const showToast = (message) => {
+        toast.textContent = message;
+        toast.classList.add("is-visible");
+        if (toastTimer) {
+          window.clearTimeout(toastTimer);
+        }
+        toastTimer = window.setTimeout(() => {
+          toast.classList.remove("is-visible");
+        }, 1200);
+      };
+
+      const togglePauseManual = () => {
+        if (state !== "focus" || isEnding) {
+          return;
+        }
+        cancelHoldEnd();
+        isPaused = !isPaused;
+        setPaused(isPaused);
+        if (isPaused) {
+          if (audioContext && audioContext.state === "running") {
+            audioContext.suspend();
+          }
+        } else {
+          lastTime = performance.now();
+          if (audioContext && audioContext.state === "suspended") {
+            audioContext.resume();
+          }
+        }
+      };
+
+      const toggleSound = () => {
+        soundMode = soundMode === "ambient" ? "silence" : "ambient";
+        soundInputs.forEach((input) => {
+          input.checked = input.value === soundMode;
+        });
+        if (state === "focus") {
+          if (soundMode === "ambient") {
+            startAmbient();
+          } else {
+            stopAmbient();
+          }
+          showToast(`Sound: ${soundMode === "ambient" ? "Ambient" : "Silence"}`);
+        }
+      };
+
+      const setPaused = (paused) => {
+        body.classList.toggle("is-paused", paused);
+      };
+
+      const resizeBubble = () => {
+        const rect = bubbleCanvas.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        bubble.dpr = dpr;
+        bubble.width = rect.width;
+        bubble.height = rect.height;
+        bubbleCanvas.width = Math.max(1, rect.width * dpr);
+        bubbleCanvas.height = Math.max(1, rect.height * dpr);
+        bubble.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      };
+
+      const clearBubble = () => {
+        if (!bubble.ctx || bubble.width === 0 || bubble.height === 0) {
+          return;
+        }
+        bubble.ctx.clearRect(0, 0, bubble.width, bubble.height);
+      };
+
+      const renderBubble = (progress, opacity, endProgress) => {
+        const ctx = bubble.ctx;
+        if (!ctx || bubble.width === 0 || bubble.height === 0) {
+          return;
+        }
+
+        const size = Math.min(bubble.width, bubble.height);
+        const centerX = bubble.width / 2;
+        const centerY = bubble.height / 2;
+        const minRadius = size * 0.18;
+        const maxRadius = size * 0.42;
+        const grow = easeInOutSine(progress);
+        let radius = lerp(minRadius, maxRadius, grow);
+        let popScale = 1;
+        let popOpacity = 1;
+
+        if (isEnding) {
+          const popEase = easeOutCubic(endProgress);
+          popScale = lerp(1, 1.35, popEase);
+          popOpacity = 1 - popEase * 0.9;
+        }
+
+        radius *= popScale;
+        ctx.clearRect(0, 0, bubble.width, bubble.height);
+        ctx.save();
+        ctx.globalAlpha = opacity * popOpacity;
+
+        const gradient = ctx.createRadialGradient(
+          centerX - radius * 0.25,
+          centerY - radius * 0.25,
+          radius * 0.2,
+          centerX,
+          centerY,
+          radius
+        );
+        gradient.addColorStop(0, "rgba(123, 208, 199, 0.25)");
+        gradient.addColorStop(0.5, "rgba(123, 208, 199, 0.08)");
+        gradient.addColorStop(1, "rgba(123, 208, 199, 0.02)");
+
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.strokeStyle = "rgba(123, 208, 199, 0.35)";
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+        ctx.stroke();
+
+        if (isEnding && endProgress > 0) {
+          const ringRadius = radius * (1 + endProgress * 0.5);
+          ctx.strokeStyle = `rgba(123, 208, 199, ${0.35 * (1 - endProgress)})`;
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.arc(centerX, centerY, ringRadius, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+
+        ctx.restore();
+      };
+
+      const startSession = () => {
+        cancelHoldEnd();
+        readSetup();
+        sessionMeta = {
+          intention,
+          environment: ENV_LABELS[environment] || "String",
+          lengthLabel: sessionLengthLabel
+        };
+        label.textContent = intention;
+        setState("focus");
+        elapsed = 0;
+        phase = 0;
+        isEnding = false;
+        isPaused = document.hidden;
+        setPaused(isPaused);
+        lastTime = performance.now();
+        startAmbient();
+        path.style.opacity = "0";
+        if (rafId) {
+          cancelAnimationFrame(rafId);
+        }
+        rafId = requestAnimationFrame(tick);
+      };
+
+      const beginFocusTransition = (event) => {
+        if (state !== "setup" || body.classList.contains("is-transitioning")) {
+          return;
+        }
+        ensureAudioContext();
+        if (event?.currentTarget) {
+          const button = event.currentTarget;
+          const rect = button.getBoundingClientRect();
+          const ripple = document.createElement("span");
+          ripple.className = "ripple";
+          const size = Math.max(rect.width, rect.height) * 1.4;
+          ripple.style.width = `${size}px`;
+          ripple.style.height = `${size}px`;
+          ripple.style.left = `${event.clientX - rect.left}px`;
+          ripple.style.top = `${event.clientY - rect.top}px`;
+          button.appendChild(ripple);
+          ripple.addEventListener("animationend", () => {
+            ripple.remove();
+          });
+        }
+        body.classList.add("is-transitioning");
+        window.setTimeout(() => {
+          startSession();
+          body.classList.remove("is-transitioning");
+        }, 420);
+      };
+
+      const cancelHoldEnd = () => {
+        if (holdTimer !== null) {
+          window.clearTimeout(holdTimer);
+          holdTimer = null;
+        }
+        if (holdRaf) {
+          cancelAnimationFrame(holdRaf);
+          holdRaf = null;
+        }
+        holdStart = 0;
+        holdRing.style.strokeDashoffset = holdCircumference;
+        body.classList.remove("is-holding");
+        holdOverlay.setAttribute("aria-hidden", "true");
+      };
+
+      const updateHoldProgress = () => {
+        const elapsedHold = performance.now() - holdStart;
+        const progress = clamp(elapsedHold / HOLD_DURATION_MS);
+        const eased = easeInOutSine(progress);
+        holdRing.style.strokeDashoffset = `${holdCircumference * (1 - eased)}`;
+        if (progress < 1 && holdTimer !== null) {
+          holdRaf = requestAnimationFrame(updateHoldProgress);
+        }
+      };
+
+      const startHoldEnd = () => {
+        if (state !== "focus" || isEnding) {
+          return;
+        }
+        if (holdTimer !== null) {
+          cancelHoldEnd();
+        }
+        holdStart = performance.now();
+        holdRing.style.strokeDashoffset = holdCircumference;
+        body.classList.add("is-holding");
+        holdOverlay.setAttribute("aria-hidden", "false");
+        holdTimer = window.setTimeout(() => {
+          endSession("hold", performance.now());
+        }, HOLD_DURATION_MS);
+        holdRaf = requestAnimationFrame(updateHoldProgress);
+      };
+
+      const endSession = (reason, now) => {
+        if (isEnding) {
+          return;
+        }
+        cancelHoldEnd();
+        isEnding = true;
+        endStart = now;
+        isPaused = false;
+        setPaused(false);
+        playChime();
+        stopAmbient();
+        setState("end");
+      };
+
+      const resetApp = () => {
+        if (rafId) {
+          cancelAnimationFrame(rafId);
+          rafId = null;
+        }
+        stopAmbient();
+        closeAudioContext();
+        cancelHoldEnd();
+        elapsed = 0;
+        phase = 0;
+        isEnding = false;
+        isPaused = false;
+        sessionMeta = { intention: "", environment: "", lengthLabel: "" };
+        label.textContent = "";
+        input.focus();
+        setState("entry");
+        path.style.opacity = "0";
+        clearBubble();
+        setPaused(false);
+      };
+
+      const renderLine = (env, progress, opacity, delta) => {
+        const tension = 1 - easeInOutSine(progress);
+        let baseAmplitude = STRING_AMPLITUDE;
+        let segments = STRING_SEGMENTS;
+        let cycles = STRING_CYCLES;
+        let detail = STRING_DETAIL;
+        let arcWeight = 0.55;
+        let waveWeight = 0.35;
+        let microWeight = 0.18;
+        let speedMax = STRING_SPEED_MAX;
+        let speedMin = STRING_SPEED_MIN;
+        let offset = 0;
+        let lineOpacity = 1;
+
+        if (env === "wave") {
+          baseAmplitude = WAVE_AMPLITUDE;
+          segments = WAVE_SEGMENTS;
+          cycles = WAVE_CYCLES;
+          detail = 0;
+          arcWeight = 0.35;
+          waveWeight = 0.9;
+          microWeight = 0;
+          speedMax = WAVE_SPEED_MAX;
+          speedMin = WAVE_SPEED_MIN;
+          lineOpacity = 0.85;
+        }
+
+        if (env === "stillness") {
+          baseAmplitude = STILLNESS_AMPLITUDE;
+          segments = STILLNESS_SEGMENTS;
+          cycles = 0;
+          detail = 0;
+          arcWeight = 0.35;
+          waveWeight = 0;
+          microWeight = 0;
+          speedMax = 0;
+          speedMin = 0;
+          lineOpacity = 0.12;
+        }
+
+        const speed = lerp(speedMax, speedMin, easeInOutSine(progress));
+        phase += delta * speed;
+        const amplitude = env === "stillness" ? baseAmplitude : baseAmplitude * tension;
+
+        if (env === "wave") {
+          offset = Math.sin(phase * 0.35) * amplitude * WAVE_DRIFT;
+        }
+
+        buildPath({
+          segments,
+          amplitude,
+          cycles,
+          detail,
+          phase,
+          arcWeight,
+          waveWeight,
+          microWeight,
+          offset
+        });
+
+        path.style.opacity = (opacity * lineOpacity).toFixed(3);
+      };
+
+      const renderScene = (env, progress, opacity, delta, endProgress) => {
+        if (env === "bubble") {
+          path.style.opacity = "0";
+          renderBubble(progress, opacity, endProgress);
+          return;
+        }
+        clearBubble();
+        renderLine(env, progress, opacity, delta);
+      };
+
+      const tick = (now) => {
+        const delta = state === "focus" && !isPaused && !isEnding ? now - lastTime : 0;
+        elapsed += delta;
+        lastTime = now;
+
+        const progress = clamp(elapsed / sessionDuration);
+        let opacity = 1;
+        let endProgress = 0;
+
+        if (!isEnding && progress >= 1) {
+          endSession("auto", now);
+        }
+
+        if (isEnding) {
+          endProgress = clamp((now - endStart) / END_DURATION_MS);
+          const eased = easeOutCubic(endProgress);
+          opacity = 1 - eased;
+        }
+
+        renderScene(environment, progress, opacity, delta, endProgress);
+
+        if (isEnding && endProgress >= 1) {
+          rafId = null;
+          return;
+        }
+        rafId = requestAnimationFrame(tick);
+      };
+
+      document.addEventListener("visibilitychange", () => {
+        if (state !== "focus" || isEnding) {
+          return;
+        }
+        // Pause progression while the tab is inactive.
+        if (document.hidden) {
+          cancelHoldEnd();
+          isPaused = true;
+          setPaused(true);
+          if (audioContext && audioContext.state === "running") {
+            audioContext.suspend();
+          }
+        } else {
+          isPaused = true;
+          setPaused(true);
+          lastTime = performance.now();
+          if (audioContext && audioContext.state === "running") {
+            audioContext.suspend();
+          }
+        }
+      });
+
+      window.addEventListener("blur", () => {
+        if (state === "focus") {
+          cancelHoldEnd();
+        }
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (state === "history" && event.key === "Escape") {
+          event.preventDefault();
+          closeHistory();
+          return;
+        }
+        if (state === "focus" && (event.key === "m" || event.key === "M")) {
+          event.preventDefault();
+          toggleSound();
+          return;
+        }
+        if (state === "focus" && (event.code === "Space" || event.key === " ")) {
+          event.preventDefault();
+          togglePauseManual();
+          return;
+        }
+        if (state === "focus" && event.key === "Escape") {
+          event.preventDefault();
+          if (!event.repeat) {
+            startHoldEnd();
+          }
+        }
+      });
+
+      document.addEventListener("keyup", (event) => {
+        if (state === "focus" && event.key === "Escape") {
+          cancelHoldEnd();
+        }
+      });
+
+      input.addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          showSetup();
+        }
+      });
+
+      setupScreen.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          event.preventDefault();
+          setState("entry");
+          input.focus();
+        }
+      });
+
+      optionButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          if (state === "end") {
+            saveHistory(button.textContent.trim());
+          }
+          resetApp();
+        });
+      });
+
+      startButton.addEventListener("click", (event) => {
+        beginFocusTransition(event);
+      });
+
+      endSessionHold.addEventListener("pointerdown", (event) => {
+        if (state !== "focus" || isEnding) {
+          return;
+        }
+        event.preventDefault();
+        event.stopPropagation();
+        startHoldEnd();
+      });
+
+      ["pointerup", "pointerleave", "pointercancel"].forEach((eventName) => {
+        endSessionHold.addEventListener(eventName, (event) => {
+          if (state !== "focus") {
+            return;
+          }
+          event.preventDefault();
+          event.stopPropagation();
+          cancelHoldEnd();
+        });
+      });
+
+      sessionScreen.addEventListener("pointerdown", (event) => {
+        if (state !== "focus" || isEnding || !isTouch) {
+          return;
+        }
+        if (event.target.closest(".end-session")) {
+          return;
+        }
+        event.preventDefault();
+        togglePauseManual();
+      });
+
+      historyButton.addEventListener("click", () => {
+        if (state === "entry") {
+          openHistory();
+        }
+      });
+
+      historyClose.addEventListener("click", closeHistory);
+
+      historyClear.addEventListener("click", () => {
+        if (!clearPending) {
+          clearPending = true;
+          switchHistoryClearLabel("Confirm clear", true);
+          return;
+        }
+        historyList.classList.add("is-fading");
+        historyClear.classList.add("is-switching");
+        window.setTimeout(() => {
+          localStorage.removeItem(HISTORY_KEY);
+          renderHistory();
+          resetHistoryClear();
+          historyList.classList.remove("is-fading");
+        }, 520);
+      });
+
+      window.addEventListener("load", () => {
+        body.classList.add("is-ready");
+        applyDevMode();
+        readSetup();
+        setEnvironmentClass(environment);
+        resizeBubble();
+        path.style.opacity = "0";
+        input.focus();
+        isTouch = (window.matchMedia && window.matchMedia("(pointer: coarse)").matches) ||
+          navigator.maxTouchPoints > 0 ||
+          "ontouchstart" in window;
+        body.classList.toggle("is-touch", isTouch);
+      });
+
+      window.addEventListener("resize", () => {
+        resizeBubble();
+      });
+    })();
+  </script>
+</body>
+</html>

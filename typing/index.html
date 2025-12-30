@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Serenitype – A Relaxing Typing Game to Boost Speed & Focus</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Practice your typing skills in a calming, minimalist game. Serenitype is the zen alternative to MonkeyType and 10FastFingers. Track WPM, accuracy, and improve focus.">
+<meta name="keywords" content="typing game, WPM, speed typing, accuracy, monkeytype, 10fastfingers, relaxing typing, minimalist typing, improve typing, zen game, serenitype">
+<meta name="author" content="Serenitype">
+<link rel="canonical" href="https://serenitype.app/typing/" />
+
+<!-- Open Graph tags for social previews -->
+<meta property="og:title" content="Serenitype – A Relaxing Typing Game to Boost Speed & Focus" />
+<meta property="og:description" content="Improve your typing in a zen-inspired game. Serenitype helps you train WPM and accuracy with smooth visuals and ambient sound." />
+<meta property="og:image" content="https://serenitype.app/favicon.jpg" />
+<meta property="og:url" content="https://serenitype.app/typing/" />
+<meta property="og:type" content="website" />
+
+<!-- Twitter Card -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="Serenitype – A Zen Typing Game" />
+<meta name="twitter:description" content="Improve your typing speed and focus in a relaxing, ambient game environment." />
+<meta name="twitter:image" content="https://serenitype.app/favicon.jpg" />
+
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Serenitype",
+  "url": "https://serenitype.app",
+  "logo": "https://serenitype.app/favicon.jpg",
+  "applicationCategory": "GameApplication",
+  "operatingSystem": "All",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": "4.8",
+    "reviewCount": "120"
+  }
+}
+</script>
+
+<link rel="icon" href="/favicon.ico" sizes="48x48" type="image/x-icon">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
+<link rel="icon" href="/icon-192.png" sizes="192x192">
+<link rel="icon" href="/icon-512.png" sizes="512x512">
+
+
+
+
+  <!-- Google tag -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-Z6RHYWZET5"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-Z6RHYWZET5');
+  </script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <p style="display:none;">Serenitype is a zen-inspired typing game that helps you relax while boosting your WPM. Enjoy ambient music, minimalist design, and fluid theme transitions.</p>
+
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #1e1e2f 0%, #2d2d44 100%);
+      --ghost-color: #ccc;
+      --correct-color: #fff;
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-right: env(safe-area-inset-right, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-left: env(safe-area-inset-left, 0px);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100vh; height: 100dvh; }
+    html { background: var(--bg-gradient); }
+    body {
+      background: var(--bg-gradient);
+      color: var(--ghost-color);
+      font-family: 'Inter', sans-serif;
+      overflow: hidden;
+      position: relative;
+      height: 100dvh;
+      touch-action: manipulation;
+      opacity: 0;
+      transition: background 1s ease, color 1s ease, opacity 1s ease;
+      -webkit-text-size-adjust: 100%;
+    }
+    body.is-ready {
+      opacity: 1;
+    }
+
+    /* Parallax layers */
+    canvas[layer] {
+      position: absolute; top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      pointer-events: none; z-index: 0;
+    }
+
+    /* Theme overlay */
+    #themeOverlay {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      background: #000;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      z-index: 2; /* Below titleScreen (z-index: 5) */
+    }
+
+    /* Subtitle for desktop */
+    #themeHint {
+      position: absolute;
+      bottom: 1rem;
+      width: 100%;
+      text-align: center;
+      font-size: 0.9rem;
+      color: var(--ghost-color);
+      z-index: 10;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      transition-delay: 0s;
+    }
+    body:not(.game-start):not(.game-end) #themeHint {
+      opacity: 0.6;
+      transition-delay: 0s;
+      pointer-events: auto;
+    }
+    body.game-start #themeHint,
+    body.game-end   #themeHint {
+      opacity: 0;
+    }
+    @media (max-width: 700px) {
+      #themeHint {
+        display: none;
+      }
+    }
+
+    
+
+    /* Settings button */
+    #settingsBtn {
+      position: absolute; top: calc(1rem + var(--safe-top)); right: calc(1rem + var(--safe-right));
+      background: rgba(255,255,255,0.2);
+      border: none; padding: 0.4rem; border-radius: 50%;
+      font-size: 1.5rem; color: var(--ghost-color);
+      cursor: pointer; transition: opacity 0.3s;
+      z-index: 12;
+    }
+    #settingsBtn:hover { opacity: 0.7; }
+
+    /* Settings modal */
+    #settingsModal {
+      display: none; position: fixed; z-index: 100;
+      left: 0; top: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.5);
+      justify-content: center; align-items: center;
+      backdrop-filter: blur(2px);
+    }
+    #settingsModal.active { display: flex; }
+    #settingsContent {
+      background: rgba(34,34,40,0.98); color: #fff; border-radius: 1.5rem;
+      padding: 2.2rem 2.7rem; min-width: 270px; box-shadow: 0 6px 36px #0007;
+      display: flex; flex-direction: column; gap: 1.5rem;
+      align-items: stretch;
+      font-family: 'Inter', sans-serif;
+    }
+    #settingsContent label {
+      display: flex; align-items: center; gap: 1.1em; font-size: 1.13em;
+      cursor: pointer;
+      user-select: none;
+    }
+    /* Custom toggle switch */
+    .toggle-switch {
+      position: relative;
+      width: 44px; height: 24px;
+      display: inline-block;
+    }
+    .toggle-switch input {
+      opacity: 0; width: 0; height: 0;
+    }
+    .toggle-slider {
+      position: absolute; cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(90deg, #3a3a4d 0%, #6e7fa3 100%);
+      border-radius: 24px;
+      transition: background 0.3s;
+    }
+    .toggle-switch input:checked + .toggle-slider {
+      background: linear-gradient(90deg, #7ed6a2 0%, #b8e994 100%);
+    }
+    .toggle-slider:before {
+      content: "";
+      position: absolute;
+      left: 4px; top: 4px;
+      width: 16px; height: 16px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 0.3s;
+      box-shadow: 0 2px 8px #0002;
+    }
+    .toggle-switch input:checked + .toggle-slider:before {
+      transform: translateX(20px);
+      background: #eafaf1;
+    }
+    #settingsContent button {
+      margin-top: 0.5em; padding: 0.8em 1.3em; border-radius: 1em; border: none;
+      background: linear-gradient(90deg, #3a3a4d 0%, #6e7fa3 100%);
+      color: #fff; font-size: 1.08em; cursor: pointer;
+      box-shadow: 0 2px 12px #0002;
+      transition: background 0.3s, color 0.3s, box-shadow 0.3s;
+      font-family: 'Inter', sans-serif;
+      letter-spacing: 0.02em;
+    }
+    #settingsContent button:hover {
+      background: linear-gradient(90deg, #7ed6a2 0%, #b8e994 100%);
+      color: #222;
+      box-shadow: 0 4px 18px #0003;
+    }
+
+    /* Stats modal */
+    #statsModal {
+      display: none; position: fixed; z-index: 100;
+      left: 0; top: 0; width: 100vw; height: 100vh;
+      background: rgba(0,0,0,0.5);
+      justify-content: center; align-items: center;
+      backdrop-filter: blur(2px);
+      transition: opacity 0.5s;
+      opacity: 0;
+    }
+    #statsModal.active {
+      display: flex;
+      opacity: 1;
+      animation: fadeIn 0.5s;
+    }
+    #statsContent {
+      background: rgba(34,34,40,0.98); color: #fff; border-radius: 1.5rem;
+      padding: 2.2rem 2.7rem; min-width: 270px; box-shadow: 0 6px 36px #0007;
+      display: flex; flex-direction: column; gap: 1.5rem;
+      align-items: stretch;
+      font-family: 'Inter', sans-serif;
+      border: 1.5px solid #444652;
+    }
+    #statsContent h2 { margin-bottom: 0.7em; }
+    #statsContent button {
+      margin-top: 0.5em; padding: 0.8em 1.3em; border-radius: 1em; border: none;
+      background: linear-gradient(90deg, #3a3a4d 0%, #6e7fa3 100%);
+      color: #fff; font-size: 1.08em; cursor: pointer;
+      box-shadow: 0 2px 12px #0002;
+      transition: background 0.3s, color 0.3s, box-shadow 0.3s;
+      font-family: 'Inter', sans-serif;
+      letter-spacing: 0.02em;
+    }
+    #statsContent button:hover {
+      background: linear-gradient(90deg, #7ed6a2 0%, #b8e994 100%);
+      color: #222;
+      box-shadow: 0 4px 18px #0003;
+    }
+
+    /* Fade animations for modals */
+    .modal-fade-in {
+      animation: fadeIn 0.5s forwards;
+    }
+    .modal-fade-out {
+      animation: fadeOut 0.5s forwards;
+    }
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+    @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
+    @keyframes breathe {0%{opacity:0.4;}50%{opacity:0.8;}100%{opacity:0.4;} }
+
+    /* Game text area */
+    #text {
+      position: absolute; inset: 0;
+      display: flex; align-items: center;
+      padding: 0 5vw; overflow: hidden;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.5s ease; z-index: 1;
+    }
+    body.game-start #text {
+      opacity: 1; pointer-events: auto;
+    }
+    #enterWrap {
+      display: inline-block; white-space: nowrap;
+      transform: translateX(100%); opacity: 0;
+      transition: transform 1s ease-in-out, opacity 1s ease-in-out;
+    }
+    body.game-start #enterWrap {
+      transform: translateX(0); opacity: 1;
+    }
+    #dynamicWrap {
+      display: inline-block; white-space: nowrap;
+      transition: transform 1s cubic-bezier(0.22,1,0.36,1), color 1s ease;
+      font-size: 6vw; line-height: 1.2;
+    }
+    #dynamicWrap span {
+      opacity: 0.4; color: var(--ghost-color);
+      transition: opacity 0.3s, color 1s ease;
+    }
+    #dynamicWrap span.correct { opacity: 1; color: var(--correct-color); }
+    #dynamicWrap span.incorrect {
+      color: #f66; opacity: 1;
+      animation: shake 0.2s;
+    }
+    #dynamicWrap span.mistyped {
+      color: #f66 !important;
+      opacity: 1 !important;
+    }
+    @keyframes shake {
+      0%{transform:translateX(0);}25%{transform:translateX(-2px);}
+      50%{transform:translateX(2px);}75%{transform:translateX(-2px);}
+      100%{transform:translateX(0);}
+    }
+    #dynamicWrap span.caret {
+      border-left: 3px solid var(--correct-color);
+      animation: blink 1s step-start infinite;
+    }
+    @keyframes blink {50%{border-color:transparent;}}
+
+    /* End stats */
+    #endScreen {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.82);
+      z-index: 20;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s;
+    }
+    body.game-end #endScreen {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    #resultWPM, #resultAcc {
+      font-size: 4vw;
+      margin: 0.5rem 0 0.2rem 0;
+      color: var(--correct-color);
+      opacity: 1;
+      text-align: center;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      text-shadow: 0 2px 16px #0007;
+    }
+    #endPrompt {
+      font-size: 1.3vw;
+      color: var(--ghost-color);
+      opacity: 0.8;
+      margin-top: 1.2rem;
+      font-weight: 400;
+      letter-spacing: 0.01em;
+      text-align: center;
+      animation: breathe 2.2s ease-in-out infinite;
+    }
+    @media (max-width: 700px) {
+      #endScreen {
+        padding: 0 2vw;
+      }
+      #resultWPM, #resultAcc {
+        font-size: 7vw;
+      }
+      #endPrompt {
+        font-size: 4vw;
+      }
+    }
+    body.game-end #titleScreen {
+      display: none;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    body:not(.game-end) #titleScreen {
+      display: flex;
+    }
+
+    /* Mobile-specific adjustments */
+    @media (max-width: 700px) {
+      html, body { height: 100dvh; }
+      body {
+        font-size: 3vw;
+        overflow: auto;
+      }
+      #titleScreen h1 { font-size: 12vw; }
+      #themeName { font-size: 5vw; }
+      #pressEnter, #endPrompt { font-size: 4vw; }
+      #dynamicWrap { font-size: 8vw; }
+      #resultWPM, #resultAcc { font-size: 7vw; }
+      #settingsBtn { font-size: 2.5rem; top: calc(0.5rem + var(--safe-top)); right: calc(0.5rem + var(--safe-right)); }
+      #text { padding: 0 6vw calc(6rem + var(--safe-bottom)) 6vw; }
+    }
+
+    /* Tap-to-start prompt inside title */
+    #tapToStartMobile {
+      display: none;
+      position: absolute;
+      left: 0; right: 0;
+      top: 65%; transform: translateY(-50%);
+      text-align: center;
+      font-size: 1.1rem;
+      color: var(--ghost-color);
+      opacity: 0.7;
+      z-index: 12;
+      pointer-events: none;
+      transition: opacity 0.5s ease;
+      animation: breathe 2s ease-in-out infinite;
+    }
+    @media (max-width: 700px) {
+      #tapToStartMobile {
+        display: block;
+        font-size: 4vw;
+      }
+      body.game-start #tapToStartMobile,
+      body.game-end #tapToStartMobile {
+        display: none;
+      }
+    }
+
+    /* Title screen centering and layout */
+    #titleScreen {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      z-index: 5;
+      background: rgba(0,0,0,0.72); /* Darker, full screen shade */
+      pointer-events: auto;
+      text-align: center;
+      padding: calc(1rem + var(--safe-top)) calc(1rem + var(--safe-right)) calc(1rem + var(--safe-bottom)) calc(1rem + var(--safe-left));
+      min-height: 0;
+      transition: background 0.7s cubic-bezier(0.4,0,0.2,1);
+    }
+    body.game-start #titleScreen {
+      background: transparent;
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.5s, background 0.7s cubic-bezier(0.4,0,0.2,1), visibility 0s 0.5s;
+    }
+    body.game-end #titleScreen {
+      background: rgba(0,0,0,0.72);
+      pointer-events: auto;
+      opacity: 1;
+      visibility: visible;
+      transition: opacity 0.5s, background 0.7s cubic-bezier(0.4,0,0.2,1), visibility 0s;
+    }
+    #titleScreen h1 {
+      font-family: 'Inter', sans-serif;
+      font-size: 7vw;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      color: var(--correct-color);
+      margin-bottom: 0.1em;
+      margin-top: 0;
+      line-height: 1.05;
+      text-shadow: 0 4px 32px #0007, 0 1px 0 #0008;
+    }
+    #themeName {
+      font-size: 2vw;
+      color: var(--ghost-color);
+      margin-bottom: 0.1em;
+      margin-top: 0;
+      font-weight: 300;
+      letter-spacing: 0.01em;
+      text-transform: capitalize;
+      font-family: 'Inter', sans-serif;
+      line-height: 1.1;
+    }
+    #pressEnter {
+      font-size: 1.5vw;
+      color: var(--ghost-color);
+      opacity: 0.8;
+      margin-top: 0.1em;
+      margin-bottom: 0;
+      font-weight: 400;
+      letter-spacing: 0.01em;
+      font-family: 'Inter', sans-serif;
+      line-height: 1.1;
+      animation: breathe 2.2s ease-in-out infinite;
+    }
+    @media (max-width: 700px) {
+      #pressEnter {
+        display: none;
+      }
+    }
+    @media (max-width: 700px) {
+      #titleScreen {
+        gap: 0.3rem;
+      }
+      #titleScreen h1 {
+        font-size: 16vw;
+      }
+      #themeName {
+        font-size: 5vw;
+      }
+      #pressEnter {
+        font-size: 4vw;
+      }
+    }
+
+    /* Background music */
+    #bgMusic {
+      display: none;
+    }
+  </style>
+</head>
+<body tabindex="0">
+  <!-- Parallax canvases -->
+  <canvas id="particles-bg" layer="bg"></canvas>
+  <canvas id="particles-md" layer="md"></canvas>
+  <canvas id="particles-fg" layer="fg"></canvas>
+
+  <div id="themeOverlay"></div>
+  <!-- Settings button -->
+  <button id="settingsBtn">⚙️</button>
+  <div id="settingsModal">
+    <div id="settingsContent">
+      <label>Sound
+        <span class="toggle-switch">
+          <input type="checkbox" id="soundToggle">
+          <span class="toggle-slider"></span>
+        </span>
+      </label>
+      <label>Allow Mistypes
+        <span class="toggle-switch">
+          <input type="checkbox" id="mistypeToggle">
+          <span class="toggle-slider"></span>
+        </span>
+      </label>
+      <button id="viewStatsBtn">View Lifetime Stats</button>
+      <button id="closeSettingsBtn">Close</button>
+    </div>
+  </div>
+  <div id="statsModal">
+    <div id="statsContent">
+      <h2>Lifetime Stats</h2>
+      <div id="lifetimeStats"></div>
+      <button id="closeStatsBtn">Close</button>
+    </div>
+  </div>
+
+  <!-- Title screen -->
+  <div id="titleScreen">
+    <h1>Serenitype</h1>
+    <div id="themeName"></div>
+    <div id="pressEnter">Press Enter To Play</div>
+    <div id="themeHint">Press Space to switch themes</div>
+    <div id="tapToStartMobile">Tap to start</div>
+  </div>
+
+  <!-- Typing area -->
+  <div id="text">
+    <div id="enterWrap">
+      <div id="dynamicWrap"></div>
+    </div>
+  </div>
+
+
+
+
+
+  <!-- End stats -->
+  <div id="endScreen">
+    <div id="resultWPM">WPM: <span id="wpm">0</span></div>
+    <div id="resultAcc">Accuracy: <span id="acc">100</span>%</div>
+    <div id="endPrompt">Press Enter</div>
+  </div>
+
+  <!-- Background music -->
+  <audio id="bgMusic" src="/ambient.mp3" loop preload="auto"></audio>
+<script>
+  // Texts for typing tests
+  const texts = [
+    "In the lavender fields at dawn, a solitary traveler walked along a mist-kissed path. Each breath hung like a soft whisper, and the dew-laden petals reflected the pastel sky, guiding footsteps toward an unseen horizon.",
+    "Beneath the ancient oak’s wide embrace, golden leaves drifted down like silent blessings. The forest floor, carpeted in moss and dappled sunlight, seemed to pulse with the gentle heartbeat of centuries past.",
+    "Along a tranquil mountain lake, the water mirrored snow-capped peaks and drifting clouds. A lone canoe glided in silence, its gentle ripple carrying the soft song of the wind.",
+    "On a quiet city street at twilight, lanterns flickered awake. The cobblestones glistened from an earlier rain, and the air held the promise of stories waiting beyond each narrow doorway.",
+    "In a seaside cove, waves whispered secrets to the shore. Foamy lace dissolved at the feet of weathered rocks, while gulls wheeled overhead in sunlit arcs.",
+    "High in a desert canyon, sandstone walls glowed a molten copper at sunset. The hush of the land invited the soul to slow, to listen to the earth’s ancient memory in every grain of sand.",
+    "Under a veil of northern lights, a frozen tundra shimmered in ethereal hues. Footprints left temporary marks, soon erased by swirling snow, as the sky danced in silent wonder.",
+    "Within the echoing halls of a centuries-old library, dust motes floated in shafts of golden light. The scent of aged parchment and leather-bound tomes invited a quiet reverence for every story held within.",
+    "Atop a rolling hill blanketed in wildflowers, bees hummed a gentle chorus. Each blossom swayed in time to an unseen breeze, as if the meadow itself breathed in harmony with the world.",
+    "Under a star-strewn sky, a small sailboat drifted on glassy water. The Milky Way arched overhead, and the hush of night wrapped the traveler in a cocoon of serene infinity.",
+    "In a hidden garden behind ivy-covered gates, fountains murmured in secret rhythms. Lanterns hung like suspended dreams, guiding the wanderer along winding stone paths.",
+    "At the edge of a misty moor, heather stretched to the horizon in delicate waves. The scent of damp earth and distant rain whispered of quiet, timeless summers.",
+    "Inside a mountain monastery, bells tolled at dawn. Prayer flags fluttered on the wind, their colors muted by elevation, while the valley below yawned awake in a sea of clouds.",
+    "Aboard a slow river barge, lantern light danced across rippling waters. Reed beds swayed gently, and the sky blushed in soft yellow as dawn slipped into day.",
+    "In an autumnal clearing, crimson maples stood sentinel around a silent pond. Fallen leaves formed a patchwork quilt upon the water, each circle echoing the season’s gentle farewell.",
+    "Within a sunflower field at midday, golden heads nodded under a pale blue sky. The hum of wings and the warmth of the sun created a lullaby of summer’s full bloom.",
+    "On a secluded beach at early dawn, driftwood lay scattered like silent sculptures. The horizon glowed with promise, and each wave carried a whisper of distant adventures.",
+    "In a cool, shaded grove of bamboo, light filtered through slender stalks in dappled patterns. The steady creak and sway spoke of resilience and quiet grace.",
+    "High above the world on a cliff, the traveler watched storm clouds gather over an endless ocean. Lightning traced silver veins across the sky, yet the air remained charged with a calm expectancy.",
+    "Along a winding forest path, mushrooms glowed faintly in the undergrowth. A carpet of pine needles muted footsteps, and the hush invited contemplation of life’s small wonders.",
+    "In a rose garden at dusk, petals soft as silk released their sweet perfume. Fireflies emerged in gentle flurries, like tiny stars come to dance among the blooms.",
+    "On a mist-wreathed bridge in an old town, lanterns swung with each breeze. The river below carried remnants of lantern light, twinkling like memory in motion.",
+    "Within a sunlit orchard, apple trees bent under their blush fruits. Bees and birds flitted among branches, composing a quiet symphony of summer’s abundance.",
+    "Inside a hidden chapel carved into living rock, candlelight flickered against rough stone. The hush enveloped every visitor in a sense of sacred stillness.",
+    "At a windswept plateau, grass rippled in waves beneath a cloud-strewn sky. The horizon seemed endless, offering a gentle reminder of boundless possibility.",
+    "Down a quiet canal at dusk, houseboats lay anchored in pastel reflections. Water lapped softly, and the air held the faint scent of evening jasmine.",
+    "In a winter cabin warmed by a crackling hearth, snow blanketed the world outside. Each log’s glow cast dancing shadows, weaving stories into the silent night.",
+    "On a moonlit terrace overlooking vineyards, tendrils of jasmine scented the air. Nightingales sang unseen, their notes lingering like soft petals on a gentle breeze.",
+    "Amid rolling dunes under a violet sky, shadows stretched long before night. A single lantern by a weathered tent offered a place of quiet reprieve.",
+    "In a misty rainforest, orchids dripped with dew. A chorus of frogs and distant waterfalls invited the heart into a peaceful, primeval lullaby."
+  ];
+
+  // Background music element
+  const bgMusic = document.getElementById('bgMusic');
+  bgMusic.volume = 0.3;
+
+  // Settings modal logic
+  const settingsBtn = document.getElementById('settingsBtn');
+  const settingsModal = document.getElementById('settingsModal');
+  const soundToggle = document.getElementById('soundToggle');
+  const mistypeToggle = document.getElementById('mistypeToggle');
+  const viewStatsBtn = document.getElementById('viewStatsBtn');
+  const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+  const statsModal = document.getElementById('statsModal');
+  const closeStatsBtn = document.getElementById('closeStatsBtn');
+  const lifetimeStatsDiv = document.getElementById('lifetimeStats');
+
+  // State
+  let allowMistypes = JSON.parse(localStorage.getItem('allowMistypes') || 'false');
+  soundToggle.checked = !bgMusic.muted;
+  mistypeToggle.checked = allowMistypes;
+
+  settingsBtn.onclick = () => {
+    settingsModal.classList.add('active', 'modal-fade-in');
+    settingsModal.classList.remove('modal-fade-out');
+  };
+  closeSettingsBtn.onclick = () => {
+    settingsModal.classList.remove('modal-fade-in');
+    settingsModal.classList.add('modal-fade-out');
+    setTimeout(() => {
+      settingsModal.classList.remove('active', 'modal-fade-out');
+    }, 500);
+  };
+  soundToggle.onchange = () => {
+    bgMusic.muted = !soundToggle.checked;
+    localStorage.setItem('soundMuted', bgMusic.muted);
+  };
+  mistypeToggle.onchange = () => {
+    allowMistypes = mistypeToggle.checked;
+    localStorage.setItem('allowMistypes', allowMistypes);
+  };
+  viewStatsBtn.onclick = () => {
+    settingsModal.classList.remove('modal-fade-in');
+    settingsModal.classList.add('modal-fade-out');
+    setTimeout(() => {
+      settingsModal.classList.remove('active', 'modal-fade-out');
+      showLifetimeStats();
+    }, 500);
+  };
+  closeStatsBtn.onclick = () => {
+    statsModal.classList.remove('modal-fade-in');
+    statsModal.classList.add('modal-fade-out');
+    setTimeout(() => {
+      statsModal.classList.remove('active', 'modal-fade-out');
+    }, 500);
+  };
+
+  // Persist sound setting
+  if (localStorage.getItem('soundMuted') === 'true') {
+    bgMusic.muted = true;
+    soundToggle.checked = false;
+  }
+
+  // Lifetime stats logic
+  function getStats() {
+    return JSON.parse(localStorage.getItem('lifetimeStats') || '{"games":0,"totalWPM":0,"totalAcc":0,"bestWPM":0,"bestAcc":0}');
+  }
+  function saveStats(stats) {
+    localStorage.setItem('lifetimeStats', JSON.stringify(stats));
+  }
+  function showLifetimeStats() {
+    const stats = getStats();
+    lifetimeStatsDiv.innerHTML =
+      `<div>Games Played: <b>${stats.games}</b></div>`+
+      `<div>Best WPM: <b>${stats.bestWPM}</b></div>`+
+      `<div>Best Accuracy: <b>${stats.bestAcc}%</b></div>`+
+      `<div>Average WPM: <b>${stats.games ? Math.round(stats.totalWPM/stats.games) : 0}</b></div>`+
+      `<div>Average Accuracy: <b>${stats.games ? Math.round(stats.totalAcc/stats.games) : 0}%</b></div>`;
+    statsModal.classList.add('active', 'modal-fade-in');
+    statsModal.classList.remove('modal-fade-out');
+  }
+
+  // Game state variables
+  let chars = [], idx = 0, startTime = null, tot = 0, correct = 0;
+  const bodyEl = document.body;
+  const titleEl = document.getElementById('titleScreen');
+  const wrapEl = document.getElementById('enterWrap');
+  const dynEl = document.getElementById('dynamicWrap');
+  const wpmEl = document.getElementById('wpm');
+  const accEl = document.getElementById('acc');
+  const endEl = document.getElementById('endScreen');
+
+  // Start game: fade out title, then add .game-start
+let musicStarted = false;
+function startGame2() {
+  // Play music on user interaction (start of game)
+  try {
+    if (!musicStarted) {
+      bgMusic.muted = false;
+      bgMusic.play().catch(()=>{});
+      musicStarted = true;
+    }
+  } catch (e) {}
+  bodyEl.classList.add('game-start');
+  if (isMobile()) {
+    focusMobileInput();
+  }
+  initTest2();
+}
+
+
+
+  // Initialize a new typing test
+  function initTest2() {
+    tot = 0;
+    correct = 0;
+    wpmEl.textContent = '0';
+    accEl.textContent = '100';
+    dynEl.innerHTML = '';
+    idx = 0;
+    // Pick random text
+    const p = texts[Math.floor(Math.random() * texts.length)];
+    // Create spans
+    chars = p.split('').map(c => {
+      const s = document.createElement('span');
+      s.textContent = c;
+      dynEl.appendChild(s);
+      return s;
+    });
+    // Set first caret
+    if (chars.length > 0) {
+      chars[0].classList.add('caret');
+    }
+    chase2();
+    startTime = null;
+    // Listen for typing
+    document.addEventListener('keydown', type2);
+    // For mobile caret, touchstart listener is already attached separately
+    // Slide in wrap
+    setTimeout(() => { wrapEl.style.transform = 'translateX(0)'; }, 50);
+  }
+
+  // Scroll so caret is visible
+  function chase2() {
+    if (idx < chars.length) {
+      const csp = chars[idx];
+      const off = Math.max(csp.offsetLeft - window.innerWidth * 0.25, 0);
+      dynEl.style.transform = `translateX(${-off}px)`;
+    }
+  }
+
+  // Handle key presses
+  function type2(e) {
+    if (!startTime) startTime = Date.now();
+    if (e.key.length !== 1 && e.key !== 'Backspace') return;
+    e.preventDefault();
+    tot++;
+    const s = chars[idx];
+    const expected = s?.textContent;
+    const input = e.key;
+    const isApos = expected === '’' && input === "'";
+    if (input === expected || isApos) {
+      // correct
+      correct++;
+      s.classList.remove('caret');
+      s.classList.add('correct');
+      idx++;
+    } else if (input === 'Backspace' && idx > 0) {
+      // backspace: move back
+      chars[idx].classList.remove('caret');
+      idx--;
+      chars[idx].classList.remove('correct', 'incorrect', 'mistyped');
+      chars[idx].classList.add('caret');
+      updateStats2();
+      chase2();
+      return;
+    } else if (allowMistypes && input.length === 1 && idx < chars.length) {
+      // allow mistype: mark as mistyped, move forward
+      s.classList.remove('caret');
+      s.classList.add('mistyped');
+      idx++;
+    } else {
+      // incorrect: flash
+      s.classList.add('incorrect');
+      setTimeout(() => s.classList.remove('incorrect'), 100);
+    }
+    // Move caret or end
+    if (idx < chars.length) {
+      chars.forEach(x => x.classList.remove('caret'));
+      chars[idx].classList.add('caret');
+      chase2();
+    } else {
+      updateStats2();
+      endTest2();
+      return;
+    }
+    updateStats2();
+  }
+if (isMobile()) {
+  const mobileInput = document.getElementById('mobileInput');
+  if (mobileInput) {
+    mobileInput.addEventListener('input', function(e) {
+      const val = mobileInput.value;
+      if (val.length > 0) {
+        const char = val.slice(-1);
+        type2({ key: char, preventDefault: ()=>{} });
+        mobileInput.value = '';
+      }
+    });
+    mobileInput.addEventListener('keydown', function(e) {
+      if (e.key === 'Backspace') {
+        type2({ key: 'Backspace', preventDefault: ()=>{} });
+        e.preventDefault();
+      }
+    });
+  }
+}
+
+// Call once on load:
+window.addEventListener('DOMContentLoaded', () => {
+  if (isMobile()) {
+    const wrap = document.createElement('div');
+    wrap.id = 'mobileInputWrap';
+    // style via CSS class or inline:
+    wrap.style.cssText = `
+      position: fixed; bottom: 0; left: 0;
+      width: 1px; height: 1px; z-index: 20;
+      overflow: hidden;
+      background: transparent;
+      box-shadow: none;
+      padding: 0; margin: 0;
+      pointer-events: none;
+      opacity: 0;
+      display: none;
+    `;
+    const inp = document.createElement('input');
+    inp.id = 'mobileInput';
+    inp.type = 'text';
+    inp.autocomplete = 'off';
+    inp.autocorrect = 'off';
+    inp.autocapitalize = 'off';
+    inp.spellcheck = false;
+    inp.placeholder = 'Type here...';
+    inp.style.cssText = `
+      width: 1px; height: 1px; padding: 0; margin: 0;
+      border-radius: 0; border: 0; outline: none;
+      background: transparent; color: transparent;
+      opacity: 0; box-shadow: none;
+      font-size: 16px; line-height: 1;
+      box-sizing: border-box;
+    `;
+    wrap.appendChild(inp);
+    document.body.appendChild(wrap);
+
+    // --- Fix: Only show input when game is running ---
+    function updateMobileInputVisibility() {
+      if (bodyEl.classList.contains('game-start')) {
+        wrap.style.display = 'block';
+      } else {
+        wrap.style.display = 'none';
+      }
+    }
+    // Listen for class changes
+    const observer = new MutationObserver(updateMobileInputVisibility);
+    observer.observe(bodyEl, { attributes: true, attributeFilter: ['class'] });
+    updateMobileInputVisibility();
+
+    // Attach listeners for mobileInput:
+    inp.addEventListener('input', e => {
+      const val = inp.value;
+      if (val.length > 0) {
+        const char = val.slice(-1);
+        type2({ key: char, preventDefault: ()=>{} });
+        inp.value = '';
+      }
+    });
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Backspace') {
+        type2({ key: 'Backspace', preventDefault: ()=>{} });
+        e.preventDefault();
+      }
+    });
+
+    // Focus when starting game:
+    const originalStart = startGame2;
+    startGame2 = function() {
+      originalStart();
+      setTimeout(() => {
+        focusMobileInput();
+      }, 50);
+    };
+  }
+});
+
+
+  // Update WPM and accuracy display
+  function updateStats2() {
+    const m = (Date.now() - startTime) / 60000 || 1/60;
+    wpmEl.textContent = Math.round((correct / 5) / m);
+    accEl.textContent = Math.round((correct / tot) * 100) || 0;
+  }
+
+  // End the test
+  function endTest2() {
+    document.removeEventListener('keydown', type2);
+    bodyEl.classList.remove('game-start');
+    bodyEl.classList.add('game-end');
+    endEl.classList.add('fade-in');
+    // --- Fix: Blur and hide mobile input on game end ---
+    if (isMobile()) {
+      const mobileInput = document.getElementById('mobileInput');
+      const mobileInputWrap = document.getElementById('mobileInputWrap');
+      if (mobileInput) mobileInput.blur();
+      if (mobileInputWrap) mobileInputWrap.style.display = 'none';
+    }
+    // Save stats
+    const wpm = parseInt(wpmEl.textContent, 10) || 0;
+    const acc = parseInt(accEl.textContent, 10) || 0;
+    let stats = getStats();
+    stats.games++;
+    stats.totalWPM += wpm;
+    stats.totalAcc += acc;
+    if (wpm > stats.bestWPM) stats.bestWPM = wpm;
+    if (acc > stats.bestAcc) stats.bestAcc = acc;
+    saveStats(stats);
+  }
+
+  // Touch caret movement during gameplay
+function onTextTouch(e) {
+  if (!bodyEl.classList.contains('game-start')) return;
+  e.preventDefault();
+  if (isMobile()) {
+    focusMobileInput();
+    // lock caret to front...
+    const spans = document.querySelectorAll('#dynamicWrap span');
+    if (!spans.length) return;
+    spans.forEach(s => s.classList.remove('caret'));
+    spans[0].classList.add('caret');
+    idx = 0;
+    chase2();
+  }
+}
+
+
+
+  // Attach once
+const textEl = document.getElementById('text');
+textEl.removeEventListener('touchstart', onTextTouch, { passive: false });
+textEl.addEventListener('touchstart', onTextTouch, { passive: false });
+
+
+  // Utility: detect mobile
+  function isMobile() {
+    if (window.matchMedia) {
+      const isNarrow = window.matchMedia('(max-width: 700px)').matches;
+      const isCoarse = window.matchMedia('(pointer: coarse)').matches;
+      const noHover = window.matchMedia('(hover: none)').matches;
+      if (isNarrow || (isCoarse && noHover)) return true;
+    }
+    return /Android|iPhone|iPad|iPod|Opera Mini|IEMobile|Mobile/i.test(navigator.userAgent);
+  }
+  function focusMobileInput() {
+    const mobileInput = document.getElementById('mobileInput');
+    if (!mobileInput) return;
+    try {
+      mobileInput.focus({ preventScroll: true });
+    } catch (e) {
+      mobileInput.focus();
+    }
+  }
+  // References for title/end elements
+  const titleScreenEl = document.getElementById('titleScreen');
+  const themeNameEl2 = document.getElementById('themeName');
+  const endPromptEl = document.getElementById('endPrompt');
+
+  // Keydown handler for desktop: Space to cycle theme on title, Enter to start/restart
+  document.addEventListener('keydown', (e) => {
+    // If on title screen (neither game-start nor game-end)
+    if (!bodyEl.classList.contains('game-start') && !bodyEl.classList.contains('game-end')) {
+      if (e.code === 'Space') {
+        e.preventDefault();
+        cycleTheme2();
+      }
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        titleScreenEl.classList.add('fade-out');
+        bodyEl.classList.add('fading-title');
+        setTimeout(() => {
+          bodyEl.classList.remove('fading-title');
+          startGame2(); // <-- Always use startGame2 to ensure music plays
+        }, 0); // Make transition instant
+      }
+    }
+    // If on end screen and Enter pressed, restart
+    if (bodyEl.classList.contains('game-end') && e.key === 'Enter') {
+      e.preventDefault();
+      // fade back in title
+      titleScreenEl.classList.remove('fade-out');
+      titleScreenEl.classList.add('fade-in');
+      bodyEl.classList.remove('game-end');
+    }
+    // ESC: go back to main menu from game or end screen
+    if ((bodyEl.classList.contains('game-start') || bodyEl.classList.contains('game-end')) && e.key === 'Escape') {
+      e.preventDefault();
+      // Smooth transition: fade out game/end, fade in title
+      bodyEl.classList.remove('game-start', 'game-end');
+      endEl.classList.remove('fade-in');
+      titleScreenEl.classList.remove('fade-out');
+      titleScreenEl.classList.add('fade-in');
+    }
+  });
+
+  // Touch / click on title screen for mobile and desktop:
+  titleScreenEl.addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    // If tapped themeName, cycle theme
+    if (e.target.closest('#themeName')) {
+      cycleTheme2();
+    } else {
+      // elsewhere: start game
+      titleScreenEl.classList.add('fade-out');
+      setTimeout(startGame2, 0); // Make transition instant
+    }
+  }, { passive: false });
+  titleScreenEl.addEventListener('click', function(e) {
+    if (e.target.closest('#themeName')) {
+      cycleTheme2();
+    } else {
+      titleScreenEl.classList.add('fade-out');
+      setTimeout(startGame2, 0); // Make transition instant
+    }
+  });
+
+  // Touch / click on end screen to restart on mobile/desktop
+  endPromptEl.addEventListener('click', () => {
+    if (bodyEl.classList.contains('game-end')) {
+      titleScreenEl.classList.remove('fade-out');
+      titleScreenEl.classList.add('fade-in');
+      bodyEl.classList.remove('game-end');
+    }
+  });
+  // Also allow tapping anywhere on endScreen background to restart:
+  document.getElementById('endScreen').addEventListener('touchstart', function(e) {
+    if (bodyEl.classList.contains('game-end')) {
+      e.preventDefault();
+      titleScreenEl.classList.remove('fade-out');
+      titleScreenEl.classList.add('fade-in');
+      bodyEl.classList.remove('game-end');
+    }
+  }, { passive: false });
+
+  // Ensure titleScreen has initial fade-in class on load
+  window.addEventListener('load', () => {
+    titleScreenEl.classList.add('fade-in');
+    bodyEl.classList.add('is-ready');
+  });
+
+  // Theme definitions and functions
+const themes = {
+  dawn: {
+    bg: 'linear-gradient(135deg,#FFA17F 0%,#00223E 100%)',
+    ghost: '#FFE5B4',
+    correct: '#FFFFFF'
+  },
+  dusk: {
+    bg: 'linear-gradient(135deg,#2C3E50 0%,#FD746C 100%)',
+    ghost: '#D3D3D3',
+    correct: '#FFFFFF'
+  },
+  forest: {
+    bg: 'linear-gradient(135deg,#134E5E 0%,#71B280 100%)',
+    ghost: '#BFD8B8',
+    correct: '#F0FFF0'
+  },
+  ocean: {
+    bg: 'linear-gradient(135deg,#00C9FF 0%,#92FE9D 100%)',
+    ghost: '#D0F0FD',
+    correct: '#FFFFFF'
+  },
+  night: {
+    bg: 'linear-gradient(135deg,#0f2027 0%,#203a43 50%,#2c5364 100%)',
+    ghost: '#AAB8C2',
+    correct: '#FFFFFF'
+  },
+  sunset: {
+    bg: 'linear-gradient(135deg,#ff9a9e 0%,#fad0c4 100%)',
+    ghost: '#FFECE7',
+    correct: '#FFFFFF'
+  },
+  rainbow: {
+    bg: 'linear-gradient(135deg,#f6d365 0%,#fda085 20%,#fbc2eb 40%,#a6c1ee 60%,#84fab0 80%,#8fd3f4 100%)',
+    ghost: '#FFFFFF',
+    correct: '#000000'
+  },
+  autumn: {
+    bg: 'linear-gradient(135deg,#e96443 0%,#904e95 100%)',
+    ghost: '#F5D6C6',
+    correct: '#FFFFFF'
+  }
+};
+const keys = Object.keys(themes);
+let idxTheme = 0;
+const themeNameEl = document.getElementById('themeName');
+
+function applyTheme2(key) {
+  const t = themes[key];
+  document.documentElement.style.setProperty('--bg-gradient', t.bg);
+  document.documentElement.style.setProperty('--ghost-color', t.ghost);
+  document.documentElement.style.setProperty('--correct-color', t.correct);
+  themeNameEl.textContent = key;
+}
+// Ensure theme is applied on load
+applyTheme2(keys[idxTheme]);
+
+function cycleTheme2() {
+  document.getElementById('themeOverlay').style.opacity = '1';
+  setTimeout(() => {
+    idxTheme = (idxTheme + 1) % keys.length;
+    applyTheme2(keys[idxTheme]);
+    document.getElementById('themeOverlay').style.opacity = '0';
+  }, 500);
+}
+
+// Parallax particle layers
+const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const particleMultiplier = (isMobile() || prefersReducedMotion) ? 0.6 : 1;
+const layers = [
+  { canvas: document.getElementById('particles-bg'), speed: 0.2, count: Math.max(20, Math.round(50 * particleMultiplier)), size: [3,5], alpha: [0.05,0.2] },
+  { canvas: document.getElementById('particles-md'), speed: 0.5, count: Math.max(30, Math.round(75 * particleMultiplier)), size: [2,4], alpha: [0.1,0.4] },
+  { canvas: document.getElementById('particles-fg'), speed: 1.0, count: Math.max(40, Math.round(100 * particleMultiplier)), size: [1,3], alpha: [0.2,0.6] }
+];
+layers.forEach(layer => {
+  const c = layer.canvas;
+  const ctx = c.getContext('2d');
+  let parts = [];
+  function resize() {
+    c.width = innerWidth;
+    c.height = innerHeight;
+  }
+  function init() {
+    parts = [];
+    for (let i = 0; i < layer.count; i++) {
+      parts.push({
+        x: Math.random() * c.width,
+        y: Math.random() * c.height,
+        r: Math.random() * (layer.size[1] - layer.size[0]) + layer.size[0],
+        dy: Math.random() * layer.speed + 0.1,
+        alpha: Math.random() * (layer.alpha[1] - layer.alpha[0]) + layer.alpha[0]
+      });
+    }
+  }
+  function draw() {
+    ctx.clearRect(0, 0, c.width, c.height);
+    parts.forEach(p => {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, 2 * Math.PI);
+      ctx.fillStyle = `rgba(255,255,255,${p.alpha})`;
+      ctx.fill();
+      p.y -= p.dy;
+      if (p.y < -p.r) p.y = c.height + p.r;
+    });
+    requestAnimationFrame(draw);
+  }
+  window.addEventListener('resize', () => { resize(); init(); });
+  resize();
+  init();
+  draw();
+});
+</script>
+</body>
+</html>
