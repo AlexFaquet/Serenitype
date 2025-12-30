@@ -1,0 +1,13 @@
+Audio assets (Focus Room)
+
+Rain ambience
+- Title: Relaxing rain
+- Author: Dragon Studio
+- License: -
+- Source: https://pixabay.com/sound-effects/relaxing-rain-444802/
+
+Forest ambience
+- Title: Atmo - Waldatmo Vogel (see source URL for original file name)
+- Author: Burkhard Muecke
+- License: CC BY-SA 4.0
+- Source: https://commons.wikimedia.org/wiki/File:Atmo_%E2%80%93_Waldatmo_V%C3%B6gel.mp3

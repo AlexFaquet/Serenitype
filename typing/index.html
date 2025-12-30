@@ -515,10 +515,6 @@
       }
     }
 
-    /* Background music */
-    #bgMusic {
-      display: none;
-    }
   </style>
 </head>
 <body tabindex="0">
@@ -583,8 +579,7 @@
     <div id="endPrompt">Press Enter</div>
   </div>
 
-  <!-- Background music -->
-  <audio id="bgMusic" src="/ambient.mp3" loop preload="auto"></audio>
+  <!-- Background music handled via Web Audio API -->
 <script>
   // Texts for typing tests
   const texts = [
@@ -620,9 +615,70 @@
     "In a misty rainforest, orchids dripped with dew. A chorus of frogs and distant waterfalls invited the heart into a peaceful, primeval lullaby."
   ];
 
-  // Background music element
-  const bgMusic = document.getElementById('bgMusic');
-  bgMusic.volume = 0.3;
+  // Background music handled via Web Audio API
+  const AMBIENT_URL = '/ambient.mp3';
+  let audioContext = null;
+  let ambientBuffer = null;
+  let ambientSource = null;
+  let ambientGain = null;
+  let ambientLoading = null;
+  let soundEnabled = localStorage.getItem('soundMuted') !== 'true';
+
+  function ensureAudioContext() {
+    if (!audioContext) {
+      audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioContext.state === 'suspended') {
+      audioContext.resume();
+    }
+    return audioContext;
+  }
+
+  function loadAmbientBuffer() {
+    if (ambientBuffer) return Promise.resolve(ambientBuffer);
+    if (ambientLoading) return ambientLoading;
+    const context = ensureAudioContext();
+    ambientLoading = fetch(AMBIENT_URL)
+      .then((response) => response.arrayBuffer())
+      .then((data) => context.decodeAudioData(data))
+      .then((buffer) => {
+        ambientBuffer = buffer;
+        return buffer;
+      })
+      .catch(() => null)
+      .finally(() => {
+        ambientLoading = null;
+      });
+    return ambientLoading;
+  }
+
+  function startAmbient() {
+    if (!soundEnabled || ambientSource) return;
+    const context = ensureAudioContext();
+    loadAmbientBuffer().then((buffer) => {
+      if (!buffer || !soundEnabled || ambientSource) return;
+      ambientSource = context.createBufferSource();
+      ambientGain = context.createGain();
+      ambientSource.buffer = buffer;
+      ambientSource.loop = true;
+      ambientGain.gain.value = 0.3;
+      ambientSource.connect(ambientGain);
+      ambientGain.connect(context.destination);
+      ambientSource.start();
+    });
+  }
+
+  function stopAmbient() {
+    if (ambientSource) {
+      ambientSource.stop();
+      ambientSource.disconnect();
+      ambientSource = null;
+    }
+    if (ambientGain) {
+      ambientGain.disconnect();
+      ambientGain = null;
+    }
+  }
 
   // Settings modal logic
   const settingsBtn = document.getElementById('settingsBtn');
@@ -634,10 +690,11 @@
   const statsModal = document.getElementById('statsModal');
   const closeStatsBtn = document.getElementById('closeStatsBtn');
   const lifetimeStatsDiv = document.getElementById('lifetimeStats');
+  const bodyEl = document.body;
 
   // State
   let allowMistypes = JSON.parse(localStorage.getItem('allowMistypes') || 'false');
-  soundToggle.checked = !bgMusic.muted;
+  soundToggle.checked = soundEnabled;
   mistypeToggle.checked = allowMistypes;
 
   settingsBtn.onclick = () => {
@@ -652,8 +709,13 @@
     }, 500);
   };
   soundToggle.onchange = () => {
-    bgMusic.muted = !soundToggle.checked;
-    localStorage.setItem('soundMuted', bgMusic.muted);
+    soundEnabled = soundToggle.checked;
+    localStorage.setItem('soundMuted', (!soundEnabled).toString());
+    if (!soundEnabled) {
+      stopAmbient();
+    } else if (bodyEl.classList.contains('game-start') || bodyEl.classList.contains('game-end')) {
+      startAmbient();
+    }
   };
   mistypeToggle.onchange = () => {
     allowMistypes = mistypeToggle.checked;
@@ -676,8 +738,7 @@
   };
 
   // Persist sound setting
-  if (localStorage.getItem('soundMuted') === 'true') {
-    bgMusic.muted = true;
+  if (!soundEnabled) {
     soundToggle.checked = false;
   }
 
@@ -702,7 +763,6 @@
 
   // Game state variables
   let chars = [], idx = 0, startTime = null, tot = 0, correct = 0;
-  const bodyEl = document.body;
   const titleEl = document.getElementById('titleScreen');
   const wrapEl = document.getElementById('enterWrap');
   const dynEl = document.getElementById('dynamicWrap');
@@ -713,14 +773,13 @@
   // Start game: fade out title, then add .game-start
 let musicStarted = false;
 function startGame2() {
-  // Play music on user interaction (start of game)
-  try {
-    if (!musicStarted) {
-      bgMusic.muted = false;
-      bgMusic.play().catch(()=>{});
-      musicStarted = true;
-    }
-  } catch (e) {}
+  // Start ambient on first user interaction
+  if (!musicStarted) {
+    musicStarted = true;
+  }
+  if (soundEnabled) {
+    startAmbient();
+  }
   bodyEl.classList.add('game-start');
   if (isMobile()) {
     focusMobileInput();
@@ -1069,10 +1128,19 @@ textEl.addEventListener('touchstart', onTextTouch, { passive: false });
     }
   }, { passive: false });
 
+  const markReady = () => {
+    bodyEl.classList.add('is-ready');
+  };
+
   // Ensure titleScreen has initial fade-in class on load
   window.addEventListener('load', () => {
     titleScreenEl.classList.add('fade-in');
-    bodyEl.classList.add('is-ready');
+    markReady();
+  });
+  window.addEventListener('pageshow', (event) => {
+    if (event.persisted) {
+      markReady();
+    }
   });
 
   // Theme definitions and functions

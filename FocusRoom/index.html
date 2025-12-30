@@ -773,6 +773,14 @@
               <input type="radio" name="sound" value="ambient" />
               <span>Ambient</span>
             </label>
+            <label class="segment-option">
+              <input type="radio" name="sound" value="rain" />
+              <span>Rain</span>
+            </label>
+            <label class="segment-option">
+              <input type="radio" name="sound" value="forest" />
+              <span>Forest</span>
+            </label>
           </div>
         </div>
         <div class="setup-actions">
@@ -852,6 +860,12 @@
         stillness: "Stillness",
         bubble: "Bubble"
       };
+      const SOUND_LABELS = {
+        silence: "Silence",
+        ambient: "Ambient",
+        rain: "Rain",
+        forest: "Forest"
+      };
 
       const body = document.body;
       const input = document.getElementById("taskInput");
@@ -901,10 +915,17 @@
       let holdStart = 0;
       let isTouch = false;
 
+      const SOUND_FILES = {
+        rain: "assets/rain.mp3",
+        forest: "assets/forest.mp3"
+      };
+
+      const soundBuffers = {};
+      const soundLoading = {};
+
       let audioContext = null;
-      let audioOscillator = null;
-      let audioFilter = null;
-      let audioGain = null;
+      let soundscapeNodes = [];
+      let soundscapeActive = false;
 
       const bubble = {
         ctx: bubbleCanvas.getContext("2d"),
@@ -1218,51 +1239,111 @@
           audioContext.close();
         }
         audioContext = null;
-        audioOscillator = null;
-        audioFilter = null;
-        audioGain = null;
+        soundscapeNodes = [];
+        soundscapeActive = false;
       };
 
-      const startAmbient = () => {
-        if (soundMode !== "ambient" || audioOscillator) {
+      const registerNode = (node) => {
+        soundscapeNodes.push(node);
+        return node;
+      };
+
+      const loadSoundBuffer = (key) => {
+        if (!SOUND_FILES[key]) {
+          return Promise.resolve(null);
+        }
+        if (soundBuffers[key]) {
+          return Promise.resolve(soundBuffers[key]);
+        }
+        if (soundLoading[key]) {
+          return soundLoading[key];
+        }
+        const context = ensureAudioContext();
+        soundLoading[key] = fetch(SOUND_FILES[key])
+          .then((response) => response.arrayBuffer())
+          .then((data) => context.decodeAudioData(data))
+          .then((buffer) => {
+            soundBuffers[key] = buffer;
+            return buffer;
+          })
+          .catch(() => null)
+          .finally(() => {
+            delete soundLoading[key];
+          });
+        return soundLoading[key];
+      };
+
+      const stopSoundscape = () => {
+        soundscapeNodes.forEach((node) => {
+          if (typeof node.stop === "function") {
+            try {
+              node.stop();
+            } catch (error) {
+              // Ignore nodes that were already stopped.
+            }
+          }
+          if (typeof node.disconnect === "function") {
+            node.disconnect();
+          }
+        });
+        soundscapeNodes = [];
+        soundscapeActive = false;
+      };
+
+      const startSoundscape = () => {
+        if (soundMode === "silence" || soundscapeActive) {
           return;
         }
         const context = ensureAudioContext();
-        const oscillator = context.createOscillator();
-        const filter = context.createBiquadFilter();
-        const gain = context.createGain();
+        soundscapeActive = true;
 
-        oscillator.type = "sine";
-        oscillator.frequency.value = 164;
-        filter.type = "lowpass";
-        filter.frequency.value = 320;
-        gain.gain.value = 0.0012;
+        if (soundMode === "rain" || soundMode === "forest") {
+          const targetSound = soundMode;
+          loadSoundBuffer(targetSound).then((buffer) => {
+            if (!buffer) {
+              soundscapeActive = false;
+              return;
+            }
+            if (!soundscapeActive || soundMode !== targetSound) {
+              return;
+            }
+            const master = registerNode(context.createGain());
+            master.gain.value = 0.9;
+            master.connect(context.destination);
 
-        oscillator.connect(filter);
-        filter.connect(gain);
-        gain.connect(context.destination);
-        oscillator.start();
-
-        audioContext = context;
-        audioOscillator = oscillator;
-        audioFilter = filter;
-        audioGain = gain;
-      };
-
-      const stopAmbient = () => {
-        if (audioOscillator) {
-          audioOscillator.stop();
-          audioOscillator.disconnect();
+            const source = registerNode(context.createBufferSource());
+            const gain = registerNode(context.createGain());
+            source.buffer = buffer;
+            source.loop = true;
+            gain.gain.value = targetSound === "rain" ? 0.55 : 0.45;
+            source.connect(gain);
+            gain.connect(master);
+            source.start();
+          });
+          return;
         }
-        if (audioFilter) {
-          audioFilter.disconnect();
+
+        const master = registerNode(context.createGain());
+        master.gain.value = 0.9;
+        master.connect(context.destination);
+
+        if (soundMode === "ambient") {
+          const oscillator = registerNode(context.createOscillator());
+          const filter = registerNode(context.createBiquadFilter());
+          const gain = registerNode(context.createGain());
+
+          oscillator.type = "sine";
+          oscillator.frequency.value = 164;
+          filter.type = "lowpass";
+          filter.frequency.value = 320;
+          gain.gain.value = 0.0012;
+
+          oscillator.connect(filter);
+          filter.connect(gain);
+          gain.connect(master);
+          oscillator.start();
         }
-        if (audioGain) {
-          audioGain.disconnect();
-        }
-        audioOscillator = null;
-        audioFilter = null;
-        audioGain = null;
+
       };
 
       const playChime = () => {
@@ -1296,7 +1377,7 @@
         oscB.stop(now + 1.2);
 
         window.setTimeout(() => {
-          if (!audioOscillator) {
+          if (!soundscapeActive) {
             closeAudioContext();
           }
         }, 1400);
@@ -1333,17 +1414,21 @@
       };
 
       const toggleSound = () => {
-        soundMode = soundMode === "ambient" ? "silence" : "ambient";
+        const options = soundInputs.filter((input) => !input.disabled).map((input) => input.value);
+        if (options.length === 0) {
+          return;
+        }
+        const currentIndex = Math.max(options.indexOf(soundMode), 0);
+        soundMode = options[(currentIndex + 1) % options.length];
         soundInputs.forEach((input) => {
           input.checked = input.value === soundMode;
         });
         if (state === "focus") {
-          if (soundMode === "ambient") {
-            startAmbient();
-          } else {
-            stopAmbient();
+          stopSoundscape();
+          if (soundMode !== "silence") {
+            startSoundscape();
           }
-          showToast(`Sound: ${soundMode === "ambient" ? "Ambient" : "Silence"}`);
+          showToast(`Sound: ${SOUND_LABELS[soundMode] || "Silence"}`);
         }
       };
 
@@ -1447,7 +1532,7 @@
         isPaused = document.hidden;
         setPaused(isPaused);
         lastTime = performance.now();
-        startAmbient();
+        startSoundscape();
         path.style.opacity = "0";
         if (rafId) {
           cancelAnimationFrame(rafId);
@@ -1534,7 +1619,7 @@
         isPaused = false;
         setPaused(false);
         playChime();
-        stopAmbient();
+        stopSoundscape();
         setState("end");
       };
 
@@ -1543,7 +1628,7 @@
           cancelAnimationFrame(rafId);
           rafId = null;
         }
-        stopAmbient();
+        stopSoundscape();
         closeAudioContext();
         cancelHoldEnd();
         elapsed = 0;
@@ -1801,8 +1886,12 @@
         }, 520);
       });
 
-      window.addEventListener("load", () => {
+      const markReady = () => {
         body.classList.add("is-ready");
+      };
+
+      window.addEventListener("load", () => {
+        markReady();
         applyDevMode();
         readSetup();
         setEnvironmentClass(environment);
@@ -1813,6 +1902,11 @@
           navigator.maxTouchPoints > 0 ||
           "ontouchstart" in window;
         body.classList.toggle("is-touch", isTouch);
+      });
+      window.addEventListener("pageshow", (event) => {
+        if (event.persisted) {
+          markReady();
+        }
       });
 
       window.addEventListener("resize", () => {
