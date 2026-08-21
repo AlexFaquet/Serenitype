@@ -1,461 +1,91 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Serenitype - Zen Experiences for Calm Focus</title>
-  <meta name="description" content="Serenitype is a collection of zen experiences - typing flow, focus room, and ambient rituals that help you slow down, breathe, and focus." />
-  <link rel="canonical" href="https://serenitype.app/" />
-  <meta property="og:site_name" content="Serenitype" />
-  <meta property="og:title" content="Serenitype - Zen Experiences for Calm Focus" />
-  <meta property="og:description" content="Serenitype is a collection of zen experiences - typing flow, focus room, and ambient rituals that help you slow down, breathe, and focus." />
-  <meta property="og:image" content="https://serenitype.app/icon-512.png" />
-  <meta property="og:url" content="https://serenitype.app/" />
-  <meta property="og:type" content="website" />
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="Serenitype - Zen Experiences for Calm Focus" />
-  <meta name="twitter:description" content="Serenitype is a collection of zen experiences - typing flow, focus room, and ambient rituals that help you slow down, breathe, and focus." />
-  <meta name="twitter:image" content="https://serenitype.app/icon-512.png" />
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    "name": "Serenitype",
-    "url": "https://serenitype.app/",
-    "description": "Serenitype is a collection of zen experiences for calm focus.",
-    "inLanguage": "en",
-    "publisher": {
-      "@type": "Organization",
-      "name": "Serenitype",
-      "logo": {
-        "@type": "ImageObject",
-        "url": "https://serenitype.app/icon-512.png"
-      }
-    }
-  }
-  </script>
-  <link rel="icon" href="/favicon.ico" sizes="48x48" type="image/x-icon">
-  <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#071110">
+  <meta name="color-scheme" content="dark">
+  <title>Serenitype — A quiet place to focus, breathe, and grow</title>
+  <meta name="description" content="A private, calm workspace for mindful typing, deep focus, breathing rituals, reflection, ambient sound, and a garden that grows with you.">
+  <link rel="canonical" href="https://serenitype.app/">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="icon" href="/favicon.ico" sizes="48x48">
   <link rel="icon" href="/icon-192.png" sizes="192x192">
-  <link rel="icon" href="/icon-512.png" sizes="512x512">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Serenitype">
+  <meta property="og:title" content="Serenitype — Your quiet corner of the internet">
+  <meta property="og:description" content="Focus, breathe, type, reflect, and grow a private garden from your mindful moments.">
+  <meta property="og:url" content="https://serenitype.app/">
+  <meta property="og:image" content="https://serenitype.app/icon-512.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebApplication","name":"Serenitype","url":"https://serenitype.app/","applicationCategory":"ProductivityApplication","operatingSystem":"Any","description":"A calm, private workspace for mindful focus, typing, breathing, reflection, and ambient sound."}</script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Manrope:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg: #0a1212;
-      --bg-deep: #081011;
-      --bg-soft: #122024;
-      --ink: #edf3ee;
-      --ink-dim: #9fb0a7;
-      --accent: #7bd0c7;
-      --accent-warm: #f1c38a;
-      --card: rgba(12, 20, 21, 0.7);
-      --card-border: rgba(237, 243, 238, 0.14);
-      --glow: rgba(123, 208, 199, 0.2);
-      --ease: cubic-bezier(0.22, 0, 0, 1);
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    html, body {
-      width: 100%;
-      height: 100%;
-    }
-
-    html {
-      background-color: var(--bg);
-    }
-
-    body {
-      background-color: var(--bg);
-      color: var(--ink);
-      font-family: "Manrope", "Avenir Next", "Trebuchet MS", sans-serif;
-      letter-spacing: 0.01em;
-      position: relative;
-      isolation: isolate;
-      overflow-x: hidden;
-      overflow-y: auto;
-      opacity: 0;
-      transition: opacity 0.9s var(--ease);
-    }
-
-    body.is-ready {
-      opacity: 1;
-    }
-
-    body.is-leaving {
-      opacity: 0;
-    }
-
-    .background {
-      position: fixed;
-      inset: 0;
-      background: radial-gradient(120% 140% at 50% -10%, rgba(125, 210, 199, 0.18), rgba(8, 14, 15, 0.9) 55%, #060a0b 100%);
-      z-index: 0;
-      pointer-events: none;
-    }
-
-    body::before {
-      content: "";
-      position: fixed;
-      inset: -30%;
-      background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140' viewBox='0 0 140 140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='2' stitchTiles='stitch'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='0.18'/></svg>");
-      opacity: 0.08;
-      mix-blend-mode: soft-light;
-      pointer-events: none;
-      z-index: 1;
-    }
-
-    body::after {
-      content: "";
-      position: fixed;
-      inset: -25%;
-      background: radial-gradient(120% 120% at 50% 0%, rgba(237, 243, 238, 0.08), transparent 60%);
-      opacity: 0.5;
-      pointer-events: none;
-      z-index: 1;
-    }
-
-    .orb {
-      position: fixed;
-      width: 360px;
-      height: 360px;
-      border-radius: 50%;
-      background: radial-gradient(circle at 30% 30%, rgba(241, 195, 138, 0.35), rgba(241, 195, 138, 0.04) 65%, transparent 70%);
-      filter: blur(0.5px);
-      opacity: 0.6;
-      animation: float 16s ease-in-out infinite;
-      pointer-events: none;
-      z-index: 1;
-    }
-
-    .orb.orb--left {
-      top: 10%;
-      left: -120px;
-      animation-delay: -2s;
-    }
-
-    .orb.orb--right {
-      bottom: -80px;
-      right: -140px;
-      background: radial-gradient(circle at 70% 40%, rgba(123, 208, 199, 0.35), rgba(123, 208, 199, 0.04) 70%, transparent 75%);
-      animation-delay: -6s;
-    }
-
-    .veil {
-      position: fixed;
-      inset: 0;
-      background: radial-gradient(120% 140% at 50% -10%, rgba(12, 21, 22, 0.2), rgba(5, 8, 9, 0.85) 60%, rgba(2, 4, 5, 0.95) 100%);
-      opacity: 0;
-      transition: opacity 0.9s var(--ease);
-      pointer-events: none;
-      z-index: 3;
-    }
-
-    body.is-leaving .veil {
-      opacity: 1;
-    }
-
-    .landing {
-      position: relative;
-      z-index: 2;
-      min-height: 100vh;
-      min-height: 100svh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 2.6rem;
-      padding: 5vh 7vw;
-      text-align: center;
-    }
-
-    .hero {
-      max-width: 780px;
-      display: flex;
-      flex-direction: column;
-      gap: 0.9rem;
-    }
-
-    .eyebrow {
-      font-size: 11px;
-      letter-spacing: 0.4em;
-      text-transform: uppercase;
-      color: var(--ink-dim);
-    }
-
-    h1 {
-      font-family: "Cormorant Garamond", "Georgia", serif;
-      font-size: clamp(36px, 6vw, 68px);
-      font-weight: 600;
-      line-height: 1.05;
-    }
-
-    .lead {
-      font-size: clamp(16px, 2vw, 20px);
-      color: rgba(237, 243, 238, 0.75);
-    }
-
-    .choices {
-      width: min(100%, 980px);
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 20px;
-    }
-
-    .choice {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      padding: 28px 26px;
-      border-radius: 26px;
-      border: 1px solid var(--card-border);
-      background: linear-gradient(160deg, rgba(22, 32, 33, 0.9), rgba(8, 13, 14, 0.75));
-      text-decoration: none;
-      color: inherit;
-      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.38);
-      transition: transform 0.8s var(--ease), border-color 0.8s var(--ease), box-shadow 0.8s var(--ease), background 0.8s var(--ease);
-      overflow: hidden;
-    }
-
-    .choice::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(120% 120% at 0% 0%, rgba(123, 208, 199, 0.12), transparent 45%);
-      opacity: 0;
-      transition: opacity 0.8s var(--ease);
-      pointer-events: none;
-    }
-
-    .choice:hover {
-      transform: translateY(-6px);
-      border-color: rgba(237, 243, 238, 0.3);
-      box-shadow: 0 28px 70px rgba(0, 0, 0, 0.45);
-      background: linear-gradient(160deg, rgba(26, 38, 40, 0.95), rgba(9, 14, 15, 0.75));
-    }
-
-    .choice:hover::after {
-      opacity: 1;
-    }
-
-    .choice:focus-visible {
-      outline: 2px solid rgba(123, 208, 199, 0.5);
-      outline-offset: 4px;
-    }
-
-    .choice-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-    }
-
-    .choice-badge {
-      font-size: 11px;
-      letter-spacing: 0.22em;
-      text-transform: uppercase;
-      color: var(--ink-dim);
-    }
-
-    .choice-icon {
-      width: 42px;
-      height: 42px;
-      border-radius: 14px;
-      display: grid;
-      place-items: center;
-      background: rgba(123, 208, 199, 0.12);
-      border: 1px solid rgba(123, 208, 199, 0.28);
-      color: var(--accent);
-      font-size: 18px;
-    }
-
-    .choice-title {
-      font-family: "Cormorant Garamond", "Georgia", serif;
-      font-size: clamp(24px, 3vw, 32px);
-      font-weight: 600;
-    }
-
-    .choice-desc {
-      color: rgba(237, 243, 238, 0.72);
-      font-size: 14px;
-      line-height: 1.6;
-    }
-
-    .choice-meta {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      font-size: 11px;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: rgba(237, 243, 238, 0.5);
-    }
-
-    .choice-meta span {
-      padding: 6px 12px;
-      border-radius: 999px;
-      border: 1px solid rgba(237, 243, 238, 0.12);
-      background: rgba(9, 12, 13, 0.5);
-    }
-
-    .choice-cta {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 12px;
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      color: var(--ink-dim);
-    }
-
-    .choice-cta strong {
-      color: var(--ink);
-      font-weight: 500;
-    }
-
-    .footer {
-      font-size: 12px;
-      letter-spacing: 0.18em;
-      text-transform: uppercase;
-      color: rgba(237, 243, 238, 0.45);
-    }
-
-    @keyframes float {
-      0%, 100% {
-        transform: translateY(0);
-      }
-      50% {
-        transform: translateY(-18px);
-      }
-    }
-
-    @media (max-width: 860px) {
-      .choices {
-        grid-template-columns: 1fr;
-      }
-
-      .landing {
-        padding: 7vh 8vw;
-      }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      * {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-      }
-    }
-  </style>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles/app.css">
+  <script type="module" src="/src/app.js"></script>
 </head>
 <body>
-  <div class="background" aria-hidden="true"></div>
-  <div class="orb orb--left" aria-hidden="true"></div>
-  <div class="orb orb--right" aria-hidden="true"></div>
-  <div class="veil" aria-hidden="true"></div>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div class="atmosphere" aria-hidden="true"><div class="atmosphere__glow atmosphere__glow--one"></div><div class="atmosphere__glow atmosphere__glow--two"></div><div class="atmosphere__grain"></div></div>
 
-  <main class="landing">
-    <header class="hero">
-      <div class="eyebrow">Serenitype</div>
-      <h1>Choose your space.</h1>
-      <p class="lead">Settle into a mindful rhythm - warm your fingers with a calm typing flow or sink into a guided focus ritual.</p>
-    </header>
+  <header class="site-header" id="site-header">
+    <a class="brand" href="#today" data-route="today" aria-label="Serenitype home"><span class="brand__mark" aria-hidden="true"><i></i><i></i><i></i></span><span>Serenitype</span></a>
+    <nav class="primary-nav" aria-label="Main navigation"><a href="#today" data-route="today" aria-current="page">Today</a><a href="#garden" data-route="garden">Garden</a><a href="#journey" data-route="journey">Journey</a><a href="#sound" data-route="sound">Sound</a></nav>
+    <div class="header-actions">
+      <button class="icon-button" id="sync-button" type="button" aria-label="Account and sync"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18.2a4.5 4.5 0 0 1-.4-8.98A6 6 0 0 1 18 10.8a3.7 3.7 0 0 1-.7 7.4H7Z"/><path d="M9.2 14.2 12 11.4l2.8 2.8M12 11.8v6.4"/></svg><span class="status-dot" id="sync-status-dot" aria-hidden="true"></span></button>
+      <button class="icon-button" id="settings-button" type="button" aria-label="Open settings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-2.84 2.84-.06-.06a1.7 1.7 0 0 0-1.88-.34 1.7 1.7 0 0 0-1.02 1.56V21H10v-.08A1.7 1.7 0 0 0 9 19.36a1.7 1.7 0 0 0-1.88.34l-.06.06-2.84-2.84.06-.06A1.7 1.7 0 0 0 4.62 15 1.7 1.7 0 0 0 3.06 14H3v-4h.08A1.7 1.7 0 0 0 4.64 9a1.7 1.7 0 0 0-.34-1.88l-.06-.06 2.84-2.84.06.06A1.7 1.7 0 0 0 9 4.62 1.7 1.7 0 0 0 10 3.06V3h4v.08A1.7 1.7 0 0 0 15 4.64a1.7 1.7 0 0 0 1.88-.34l.06-.06 2.84 2.84-.06.06A1.7 1.7 0 0 0 19.38 9 1.7 1.7 0 0 0 20.94 10H21v4h-.08A1.7 1.7 0 0 0 19.4 15Z"/></svg></button>
+    </div>
+  </header>
 
-    <section class="choices" aria-label="Choose an experience">
-      <a class="choice" href="typing/" data-target="typing/">
-        <div class="choice-header">
-          <div class="choice-badge">Typing</div>
-          <div class="choice-icon" aria-hidden="true">T</div>
+  <main id="main" tabindex="-1">
+    <section class="view is-active" id="view-today" data-view="today" aria-labelledby="today-title">
+      <div class="today-hero reveal">
+        <div class="today-copy"><p class="eyebrow" id="day-label">Your quiet corner</p><h1 id="today-title">Make space for<br><em>what matters.</em></h1><p class="hero-lead">No feeds. No pressure. Just a few gentle tools for returning to your attention.</p><div class="hero-actions"><button class="button button--primary" id="begin-ritual" type="button"><span>Begin a gentle ritual</span><span aria-hidden="true">→</span></button><button class="button button--quiet" data-open-experience="focus" type="button">Start focus</button></div></div>
+        <button class="garden-preview" type="button" data-route-button="garden" aria-label="Open your serenity garden"><canvas id="garden-preview-canvas" aria-hidden="true"></canvas><span class="garden-preview__label"><b id="garden-level-label">A quiet seed</b><small>Your garden grows with every mindful moment</small></span></button>
+      </div>
+      <section class="daily-strip reveal" aria-label="Your mindful activity"><div class="daily-stat"><span id="stat-moments">0</span><small>mindful moments</small></div><div class="daily-stat"><span id="stat-minutes">0</span><small>minutes reclaimed</small></div><div class="daily-stat"><span id="stat-streak">0</span><small>day rhythm</small></div><p class="daily-whisper" id="daily-whisper">Your first quiet moment is waiting.</p></section>
+      <section class="experiences-section reveal" aria-labelledby="spaces-title">
+        <div class="section-heading"><div><p class="eyebrow">Choose a space</p><h2 id="spaces-title">What do you need?</h2></div><p>Each room is intentionally simple. Enter with one purpose; leave a little lighter.</p></div>
+        <div class="experience-grid">
+          <button class="experience-card experience-card--focus" data-open-experience="focus" type="button"><span class="experience-card__number">01</span><span class="experience-card__glyph glyph-line" aria-hidden="true"></span><span class="experience-card__body"><small>Deep work</small><strong>Focus Room</strong><span>Hold one intention in a quiet, timed space.</span></span><span class="experience-card__arrow" aria-hidden="true">↗</span></button>
+          <button class="experience-card experience-card--typing" data-open-experience="typing" type="button"><span class="experience-card__number">02</span><span class="experience-card__glyph glyph-type" aria-hidden="true">Aa</span><span class="experience-card__body"><small>Find your flow</small><strong>Mindful Typing</strong><span>Warm your hands and attention with gentle words.</span></span><span class="experience-card__arrow" aria-hidden="true">↗</span></button>
+          <button class="experience-card experience-card--breathe" data-open-experience="breathe" type="button"><span class="experience-card__number">03</span><span class="experience-card__glyph glyph-orbit" aria-hidden="true"></span><span class="experience-card__body"><small>Return to now</small><strong>Breath Room</strong><span>Let a soft rhythm guide your next few breaths.</span></span><span class="experience-card__arrow" aria-hidden="true">↗</span></button>
+          <button class="experience-card experience-card--reflect" data-open-experience="reflect" type="button"><span class="experience-card__number">04</span><span class="experience-card__glyph glyph-moon" aria-hidden="true"></span><span class="experience-card__body"><small>Put it down</small><strong>Reflection</strong><span>A private page for thoughts that need somewhere to land.</span></span><span class="experience-card__arrow" aria-hidden="true">↗</span></button>
         </div>
-        <div class="choice-title">Serenitype Typing</div>
-        <p class="choice-desc">Breathe with the words, track your WPM, and glide through gentle text with ambient light.</p>
-        <div class="choice-meta">
-          <span>Flow</span>
-          <span>WPM</span>
-          <span>Accuracy</span>
-        </div>
-        <div class="choice-cta">
-          <span>Press 1</span>
-          <strong>Enter the garden</strong>
-        </div>
-      </a>
-
-      <a class="choice" href="FocusRoom/" data-target="FocusRoom/">
-        <div class="choice-header">
-          <div class="choice-badge">Focus</div>
-          <div class="choice-icon" aria-hidden="true">F</div>
-        </div>
-        <div class="choice-title">Focus Room</div>
-        <p class="choice-desc">Name your intention, select a soundscape, and settle into a soft, paced focus session.</p>
-        <div class="choice-meta">
-          <span>Stillness</span>
-          <span>Intention</span>
-          <span>Rhythm</span>
-        </div>
-        <div class="choice-cta">
-          <span>Press 2</span>
-          <strong>Begin the ritual</strong>
-        </div>
-      </a>
+      </section>
     </section>
 
-    <div class="footer">Use 1 or 2, or simply tap a path.</div>
+    <section class="view" id="view-garden" data-view="garden" aria-labelledby="garden-title" hidden>
+      <div class="page-intro reveal"><p class="eyebrow">A living record</p><h1 id="garden-title">Your serenity garden</h1><p>Nothing to optimize. This place simply remembers that you showed up.</p></div>
+      <div class="garden-stage reveal"><canvas id="garden-canvas" aria-label="A generative garden representing your completed mindful sessions"></canvas><div class="garden-empty" id="garden-empty"><span>A seed rests beneath the soil.</span><small>Complete any experience to help it grow.</small></div><div class="garden-legend" aria-label="Garden legend"><span><i class="legend-focus"></i> Focus blooms</span><span><i class="legend-typing"></i> Typing leaves</span><span><i class="legend-breathe"></i> Breathing reeds</span><span><i class="legend-reflect"></i> Reflections glow</span></div></div>
+      <div class="garden-notes reveal"><div><small>Garden age</small><strong id="garden-age">Today</strong></div><div><small>Growth</small><strong id="garden-growth">A quiet seed</strong></div><div><small>Last tended</small><strong id="garden-last">Not yet</strong></div><button class="button button--quiet" id="export-garden" type="button">Save garden image</button></div>
+    </section>
+
+    <section class="view" id="view-journey" data-view="journey" aria-labelledby="journey-title" hidden>
+      <div class="page-intro reveal"><p class="eyebrow">Your journey</p><h1 id="journey-title">Small moments, softly kept</h1><p>A private record stored on this device—and synced only if you choose.</p></div>
+      <div class="journey-layout"><section class="journey-calendar card reveal" aria-labelledby="rhythm-title"><div class="card-heading"><div><p class="eyebrow">Last twelve weeks</p><h2 id="rhythm-title">Your rhythm</h2></div><span id="journey-total">0 moments</span></div><div class="rhythm-grid" id="rhythm-grid" aria-label="Activity over the last twelve weeks"></div></section><section class="journey-insight card reveal" aria-labelledby="insight-title"><p class="eyebrow">A gentle observation</p><blockquote id="insight-title">“Your patterns will appear here without judgment.”</blockquote><p id="insight-copy">There is nothing to prove. A single moment of attention is already enough.</p></section><section class="journey-history card reveal" aria-labelledby="history-title"><div class="card-heading"><div><p class="eyebrow">Recently</p><h2 id="history-title">Quiet moments</h2></div><button class="text-button" id="export-data" type="button">Export data</button></div><div class="history-list" id="history-list"></div></section></div>
+    </section>
+
+    <section class="view" id="view-sound" data-view="sound" aria-labelledby="sound-title" hidden>
+      <div class="page-intro reveal"><p class="eyebrow">Ambient sound</p><h1 id="sound-title">Shape the room around you</h1><p>Layer quiet textures. Audio stays on your device and fades gently when you leave.</p></div>
+      <div class="sound-room reveal" id="sound-room"><div class="sound-orb" id="sound-orb" aria-hidden="true"><i></i><i></i><i></i></div><div class="sound-mixer" id="sound-mixer"></div><button class="button button--primary" id="sound-master" type="button">Play soundscape</button><p class="keyboard-hint">Use headphones at a comfortable volume.</p></div>
+    </section>
   </main>
 
-  <script>
-    const choices = Array.from(document.querySelectorAll(".choice"));
-    const prefersReducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  <footer class="site-footer"><span>Serenitype</span><p>Private by default. Made for slower moments.</p><button class="text-button" id="privacy-button" type="button">Privacy</button></footer>
 
-    const navigateTo = (target) => {
-      if (!target) {
-        return;
-      }
-      if (prefersReducedMotion) {
-        window.location.href = target;
-        return;
-      }
-      document.body.classList.add("is-leaving");
-      document.body.setAttribute("aria-busy", "true");
-      window.setTimeout(() => {
-        window.location.href = target;
-      }, 700);
-    };
+  <section class="experience-shell" id="experience-shell" aria-hidden="true" hidden><div class="experience-shell__backdrop" aria-hidden="true"></div><div class="experience-shell__chrome"><button class="shell-back" id="experience-close" type="button"><span aria-hidden="true">←</span> Leave room</button><div class="shell-progress" id="ritual-progress" hidden></div><button class="icon-button" id="experience-sound-toggle" type="button" aria-label="Toggle sound" hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4Z"/><path d="M16 9.5a4 4 0 0 1 0 5M18.5 7a7.5 7.5 0 0 1 0 10"/></svg></button></div><div class="experience-root" id="experience-root" role="document"></div></section>
 
-    choices.forEach((choice) => {
-      choice.addEventListener("click", (event) => {
-        event.preventDefault();
-        navigateTo(choice.getAttribute("data-target"));
-      });
-    });
+  <dialog class="modal" id="settings-dialog" aria-labelledby="settings-title"><form method="dialog" class="modal__panel"><div class="modal__heading"><div><p class="eyebrow">Your space</p><h2 id="settings-title">Preferences</h2></div><button class="icon-button modal-close" value="cancel" aria-label="Close settings">×</button></div><label class="setting-row"><span><b>Gentler motion</b><small>Reduce drifting and animated details</small></span><input id="reduce-motion-setting" type="checkbox" role="switch"></label><label class="setting-row"><span><b>Interface sound</b><small>Soft chimes at the end of a ritual</small></span><input id="chime-setting" type="checkbox" role="switch"></label><label class="setting-row setting-row--stack"><span><b>Your name</b><small>Used only for a warmer welcome</small></span><input id="name-setting" class="field" type="text" maxlength="40" placeholder="How should we greet you?"></label><div class="modal__actions"><button class="button button--quiet" id="import-data" type="button">Import backup</button><button class="button button--primary" value="default">Save preferences</button></div></form></dialog>
 
-    document.addEventListener("keydown", (event) => {
-      if (event.key === "1") {
-        navigateTo("typing/");
-      }
-      if (event.key === "2") {
-        navigateTo("FocusRoom/");
-      }
-    });
+  <dialog class="modal" id="auth-dialog" aria-labelledby="auth-title"><div class="modal__panel auth-panel"><div class="modal__heading"><div><p class="eyebrow">Optional sync</p><h2 id="auth-title">Carry your garden with you</h2></div><button class="icon-button modal-close" id="auth-close" type="button" aria-label="Close account dialog">×</button></div><p class="modal-copy" id="auth-copy">Serenitype works without an account. Sign in only if you want a private cloud copy.</p><div id="auth-guest"><div class="auth-tabs" role="tablist"><button class="is-active" data-auth-mode="login" role="tab" aria-selected="true">Sign in</button><button data-auth-mode="register" role="tab" aria-selected="false">Create account</button></div><form id="auth-form" class="auth-form"><label><span>Email</span><input class="field" name="email" type="email" autocomplete="email" required></label><label id="display-name-field" hidden><span>Name</span><input class="field" name="displayName" type="text" autocomplete="name" maxlength="40"></label><label><span>Password</span><input class="field" name="password" type="password" autocomplete="current-password" minlength="10" required></label><p class="form-message" id="auth-message" role="status"></p><button class="button button--primary" type="submit">Sign in</button></form></div><div id="auth-account" hidden><div class="account-card"><span class="account-avatar" id="account-avatar">S</span><div><strong id="account-name">Serenitype guest</strong><small id="account-email"></small></div></div><p class="sync-note" id="last-sync-label">Your garden is synced.</p><div class="modal__actions"><button class="button button--quiet" id="sync-now" type="button">Sync now</button><button class="text-button text-button--danger" id="logout-button" type="button">Sign out</button></div></div></div></dialog>
 
-    const markReady = () => {
-      document.body.classList.add("is-ready");
-      document.body.classList.remove("is-leaving");
-      document.body.removeAttribute("aria-busy");
-    };
+  <dialog class="modal" id="entry-dialog" aria-labelledby="entry-title"><div class="modal__panel"><div class="modal__heading"><div><p class="eyebrow" id="entry-date">Private reflection</p><h2 id="entry-title">A quiet page</h2></div><button class="icon-button modal-close" id="entry-close" aria-label="Close reflection">×</button></div><p class="reflection-entry" id="entry-body"></p></div></dialog>
 
-    window.addEventListener("load", markReady);
-    window.addEventListener("pageshow", (event) => {
-      if (event.persisted) {
-        markReady();
-      }
-    });
-  </script>
+  <dialog class="modal" id="privacy-dialog" aria-labelledby="privacy-title"><div class="modal__panel"><div class="modal__heading"><div><p class="eyebrow">Privacy</p><h2 id="privacy-title">Quiet means private</h2></div><button class="icon-button modal-close" id="privacy-close" aria-label="Close privacy information">×</button></div><div class="prose"><p>Your sessions, reflections, preferences, and garden live in this browser by default. Serenitype includes no advertising trackers.</p><p>If you create an account, your application data is sent to the Serenitype server so you can use it on another device. Passwords are salted and hashed; session cookies are HTTP-only. Reflections are not end-to-end encrypted, so do not use Serenitype for secrets.</p><p>You can export your data at any time, use the product entirely offline, or sign out and continue locally.</p></div></div></dialog>
+
+  <input id="import-file" type="file" accept="application/json" hidden><div class="toast-region" id="toast-region" role="status" aria-live="polite"></div><noscript><div class="noscript">Serenitype needs JavaScript for its interactive rooms. Your browser can still display this message without sending any data.</div></noscript>
 </body>
 </html>

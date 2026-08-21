@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: serenitype
+    runtime: docker
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_PATH
+        value: /data/serenitype.sqlite
+    disk:
+      name: serenitype-data
+      mountPath: /data
+      sizeGB: 1
+

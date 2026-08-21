@@ -1,0 +1,22 @@
+{
+  "name": "Serenitype",
+  "short_name": "Serenitype",
+  "description": "A quiet place to focus, breathe, type, reflect, and grow.",
+  "id": "/",
+  "start_url": "/#today",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#071110",
+  "theme_color": "#071110",
+  "categories": ["productivity", "lifestyle", "utilities"],
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Focus Room", "short_name": "Focus", "url": "/?experience=focus", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Breath Room", "short_name": "Breathe", "url": "/?experience=breathe", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Mindful Typing", "short_name": "Typing", "url": "/?experience=typing", "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }] }
+  ]
+}
